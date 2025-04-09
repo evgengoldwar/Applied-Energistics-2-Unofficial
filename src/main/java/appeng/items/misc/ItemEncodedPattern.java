@@ -52,6 +52,7 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
     // rather simple client side caching.
     private static final Map<ItemStack, ItemStack> SIMPLE_CACHE = new WeakHashMap<>();
     private static Item FLUID_DROP_ITEM;
+    private static boolean checkedCache = false;
 
     public ItemEncodedPattern() {
         this.setFeature(EnumSet.of(AEFeature.Patterns));
@@ -226,7 +227,7 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
                 recipeIsBroken = true;
             }
 
-            if (item.getItemStack().getItem() == fluidDropItem) {
+            if (fluidDropItem != null && item.getItemStack().getItem() == fluidDropItem) {
                 label = EnumChatFormatting.GOLD + label;
                 color = EnumChatFormatting.GOLD;
                 isFluid = true;
@@ -267,8 +268,11 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
     }
 
     private static Item getFluidDropItem() {
-        if (FLUID_DROP_ITEM == null) {
+        // Use a checked cache variable instead of relying on the item lookup for cache since
+        // we don't want to recheck every time if AE2FC is not installed
+        if (!checkedCache) {
             FLUID_DROP_ITEM = GameRegistry.findItem("ae2fc", "fluid_drop");
+            checkedCache = true;
         }
         return FLUID_DROP_ITEM;
     }
