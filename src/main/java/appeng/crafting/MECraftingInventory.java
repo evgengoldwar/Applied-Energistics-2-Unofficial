@@ -10,14 +10,15 @@
 
 package appeng.crafting;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import javax.annotation.Nonnull;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
-import net.minecraft.util.StatCollector;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
@@ -31,9 +32,6 @@ import appeng.api.storage.data.IItemList;
 import appeng.core.AELog;
 import appeng.core.localization.PlayerMessages;
 import appeng.util.IterationCounter;
-
-import java.text.NumberFormat;
-import java.util.Locale;
 
 public class MECraftingInventory implements IMEInventory<IAEItemStack> {
 
@@ -352,8 +350,12 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack> {
             if (player == null || expected == null || expected.getItem() == null) return;
             IChatComponent missingItem = expected.getItemStack().func_151000_E();
             missingItem.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            String expectedCount = EnumChatFormatting.RED + NumberFormat.getNumberInstance(Locale.getDefault()).format(expected.getStackSize()) + EnumChatFormatting.RESET;
-            String extractedCount = EnumChatFormatting.RED + NumberFormat.getNumberInstance(Locale.getDefault()).format(extracted.getStackSize()) + EnumChatFormatting.RESET;
+            String expectedCount = EnumChatFormatting.RED
+                    + NumberFormat.getNumberInstance(Locale.getDefault()).format(expected.getStackSize())
+                    + EnumChatFormatting.RESET;
+            String extractedCount = EnumChatFormatting.RED
+                    + NumberFormat.getNumberInstance(Locale.getDefault()).format(extracted.getStackSize())
+                    + EnumChatFormatting.RESET;
 
             player.addChatMessage(
                     new ChatComponentTranslation(
