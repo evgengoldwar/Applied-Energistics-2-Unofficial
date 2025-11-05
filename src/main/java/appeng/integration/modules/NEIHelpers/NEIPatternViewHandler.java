@@ -63,11 +63,11 @@ public class NEIPatternViewHandler implements IUsageHandler {
     private static final int REVERSED_OUTPUTS_ROWS = 8;
 
     private static final int ARROW_TEXTURE_X = 91;
-    private static final int ARROW_TEXTURE_Y = 36;
-    private static final int ARROW_TEXTURE_WIDTH = 21;
-    private static final int ARROW_TEXTURE_HEIGHT = 14;
-    private static final int ARROW_DRAW_WIDTH = 21;
-    private static final int ARROW_DRAW_HEIGHT = 14;
+    private static final int ARROW_TEXTURE_Y = 35;
+    private static final int ARROW_TEXTURE_WIDTH = 22;
+    private static final int ARROW_TEXTURE_HEIGHT = 15;
+    private static final int ARROW_DRAW_WIDTH = 22;
+    private static final int ARROW_DRAW_HEIGHT = 15;
     private static final int ARROW_OFFSET_X = 5;
     private static final int ARROW_OFFSET_Y = 10;
 
