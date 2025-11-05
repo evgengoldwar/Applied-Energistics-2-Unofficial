@@ -68,8 +68,8 @@ public class NEIPatternViewHandler implements IUsageHandler {
     private static final int ARROW_TEXTURE_HEIGHT = 15;
     private static final int ARROW_DRAW_WIDTH = 22;
     private static final int ARROW_DRAW_HEIGHT = 15;
-    private static final int ARROW_OFFSET_X = 5;
-    private static final int ARROW_OFFSET_Y = 10;
+    private static final double ARROW_OFFSET_X = 5;
+    private static final double ARROW_OFFSET_Y = 8.5F;
 
     private int inputsCols;
     private int inputsRows;
@@ -274,8 +274,8 @@ public class NEIPatternViewHandler implements IUsageHandler {
         Tessellator tessellator = Tessellator.instance;
         tessellator.startDrawingQuads();
 
-        int arrowX = arrowOffsetX + ARROW_OFFSET_X;
-        int arrowY = arrowCenterY + ARROW_OFFSET_Y;
+        double arrowX = arrowOffsetX + ARROW_OFFSET_X;
+        double arrowY = arrowCenterY + ARROW_OFFSET_Y;
 
         float uMin = ARROW_TEXTURE_X / 256f;
         float uMax = (ARROW_TEXTURE_X + ARROW_TEXTURE_WIDTH) / 256f;
