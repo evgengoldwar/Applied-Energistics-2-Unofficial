@@ -1,11 +1,15 @@
 package appeng.integration.modules.NEIHelpers;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import appeng.api.config.TerminalFontSize;
+import appeng.client.render.StackSizeRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -25,16 +29,19 @@ import codechicken.nei.api.IRecipeOverlayRenderer;
 import codechicken.nei.recipe.GuiRecipe;
 import codechicken.nei.recipe.IUsageHandler;
 
+import static codechicken.lib.gui.GuiDraw.fontRenderer;
+import static net.minecraft.util.EnumChatFormatting.GRAY;
+
 public class NEIPatternViewHandler implements IUsageHandler {
 
     private static class PatternSlot {
 
         public final PositionedStack stack;
-        public final boolean isOutput;
+        public long stackSize;
 
-        public PatternSlot(PositionedStack stack, boolean isOutput) {
+        public PatternSlot(PositionedStack stack, long stackSize) {
             this.stack = stack;
-            this.isOutput = isOutput;
+            this.stackSize = stackSize;
         }
     }
 
@@ -182,30 +189,31 @@ public class NEIPatternViewHandler implements IUsageHandler {
             if (i < inputs.size()) {
                 IAEItemStack aeInput = inputs.get(i);
                 if (aeInput != null) {
-                    ItemStack inputStack = aeInput.getItemStack();
-                    if (inputStack != null) {
-                        PositionedStack posStack = createPositionedStack(inputStack, x, y);
-                        inputSlots.add(new PatternSlot(posStack, false));
-                    }
+                    ItemStack inputStack = aeInput.getItemStack().copy();
+                    inputStack.stackSize = 1;
+                    PositionedStack posStack = createPositionedStack(inputStack, x, y);
+                    inputSlots.add(new PatternSlot(posStack, aeInput.getStackSize()));
+
                 }
             }
         }
     }
 
     private void populateOutputSlots(List<IAEItemStack> outputs) {
-        for (int i = 0; i < outputs.size() && i < outputsCols * outputsRows; i++) {
-            IAEItemStack aeOutput = outputs.get(i);
-            if (aeOutput != null) {
-                ItemStack outputStack = aeOutput.getItemStack();
-                if (outputStack != null) {
-                    int row = i / outputsCols;
-                    int col = i % outputsCols;
-                    int x = outputsOffsetX + col * 18 + 1;
-                    int y = patternDetails.isCraftable() && i == 0 ? craftingOutputY + 1
-                            : SLOTS_OFFSET_Y + row * 18 + 1;
+        for (int i = 0; i < outputsCols * outputsRows; i++) {
+            int row = i / outputsCols;
+            int col = i % outputsCols;
+            int x = outputsOffsetX + col * 18 + 1;
+            int y = patternDetails.isCraftable() && i == 0 ? craftingOutputY + 1
+                    : SLOTS_OFFSET_Y + row * 18 + 1;
 
+            if (i < outputs.size()) {
+                IAEItemStack aeOutput = outputs.get(i);
+                if (aeOutput != null) {
+                    ItemStack outputStack = aeOutput.getItemStack().copy();
+                    outputStack.stackSize = 1;
                     PositionedStack posStack = createPositionedStack(outputStack, x, y);
-                    outputSlots.add(new PatternSlot(posStack, true));
+                    outputSlots.add(new PatternSlot(posStack, aeOutput.getStackSize()));
                 }
             }
         }
@@ -301,11 +309,34 @@ public class NEIPatternViewHandler implements IUsageHandler {
 
         fontRenderer.drawString(inputs, inputsCenterX, INFO_OFFSET_Y, TEXT_COLOR);
         fontRenderer.drawString(outputs, outputsCenterX, INFO_OFFSET_Y, TEXT_COLOR);
+
+        drawStackSize(inputSlots);
+        drawStackSize(outputSlots);
+    }
+
+    private void drawStackSize(ArrayList<PatternSlot> stacks) {
+        for (PatternSlot viewStack : stacks) {
+            StackSizeRenderer.drawStackSize(
+                    viewStack.stack.relx,
+                    viewStack.stack.rely,
+                    viewStack.stackSize,
+                    fontRenderer,
+                    TerminalFontSize.SMALL);
+        }
+    }
+
+    private void drawStackSizeTooltip(ArrayList<PatternSlot> stacks, ItemStack curStack, List<String> currenttip) {
+        stacks.stream().filter(viewStack -> viewStack.stack.item.equals(curStack)).findFirst().ifPresent(
+                viewItemStack -> currenttip.add(
+                        1,
+                        GRAY + GuiText.Stored.getLocal()
+                                + ": "
+                                + NumberFormat.getNumberInstance().format(viewItemStack.stackSize)));
     }
 
     @Override
     public List<PositionedStack> getIngredientStacks(int recipe) {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     @Override
@@ -351,6 +382,11 @@ public class NEIPatternViewHandler implements IUsageHandler {
 
     @Override
     public List<String> handleItemTooltip(GuiRecipe<?> gui, ItemStack stack, List<String> currenttip, int recipe) {
+        if (stack == null) return currenttip;
+
+        drawStackSizeTooltip(inputSlots, stack, currenttip);
+        drawStackSizeTooltip(outputSlots, stack, currenttip);
+
         return currenttip;
     }
 
