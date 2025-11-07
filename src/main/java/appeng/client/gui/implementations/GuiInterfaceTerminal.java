@@ -24,18 +24,12 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 
-import appeng.core.sync.GuiBridge;
-import appeng.core.sync.packets.PacketOpenPatternEditorGUI;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.InventoryBasic;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -56,6 +50,7 @@ import appeng.api.config.StringOrder;
 import appeng.api.config.TerminalStyle;
 import appeng.api.config.YesNo;
 import appeng.api.implementations.ICraftingPatternItem;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.NamedDimensionalCoord;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.IGuiTooltipHandler;
@@ -65,6 +60,7 @@ import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.IDropToFillTextField;
 import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.client.render.highlighter.BlockPosHighlighter;
+import appeng.container.AEBaseContainer;
 import appeng.container.implementations.ContainerInterfaceTerminal;
 import appeng.container.slot.AppEngSlot;
 import appeng.core.AEConfig;
@@ -365,13 +361,21 @@ public class GuiInterfaceTerminal extends AEBaseGui
         }
 
         if (hoveredItemStack.getItem() instanceof ICraftingPatternItem) {
-            PacketOpenPatternEditorGUI packet = new PacketOpenPatternEditorGUI(
-                    GuiBridge.GUI_PATTERN_TERMINAL,
-                    hoveredEntry.id,
-                    hoveredEntry.hoveredSlotIdx,
-                    hoveredItemStack
-            );
-            NetworkHandler.instance.sendToServer(packet);
+            // PacketOpenPatternEditorGUI packet = new PacketOpenPatternEditorGUI(
+            // GuiBridge.GUI_PATTERN_TERMINAL,
+            // hoveredEntry.id,
+            // hoveredEntry.hoveredSlotIdx,
+            // hoveredItemStack
+            // );
+            // NetworkHandler.instance.sendToServer(packet);
+
+            InventoryAction action = InventoryAction.EDIT_PATTERN_ITEM;
+
+            IAEItemStack stack = AEItemStack.create(hoveredItemStack);
+            ((AEBaseContainer) this.inventorySlots).setTargetStack(stack);
+            final PacketInventoryAction p = new PacketInventoryAction(action, hoveredEntry.hoveredSlotIdx, 0);
+            NetworkHandler.instance.sendToServer(p);
+
             return true;
         }
 

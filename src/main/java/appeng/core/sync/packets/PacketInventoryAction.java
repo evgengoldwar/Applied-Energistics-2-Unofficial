@@ -12,8 +12,12 @@ package appeng.core.sync.packets;
 
 import java.io.IOException;
 
+import appeng.api.implementations.ICraftingPatternItem;
+import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.container.implementations.ContainerEditorPattern;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
 import appeng.api.storage.data.IAEItemStack;
@@ -166,6 +170,33 @@ public class PacketInventoryAction extends AppEngPacket {
                             cpir.getPatternValue().putStack(baseContainer.getTargetStack().getItemStack());
                         }
                         cpir.detectAndSendChanges();
+                    }
+                }
+            } else if (this.action == InventoryAction.EDIT_PATTERN_ITEM) {
+                final ContainerOpenContext context = baseContainer.getOpenContext();
+                if (context != null) {
+                    final TileEntity te = context.getTile();
+                    Platform.openGUI(
+                            sender,
+                            te,
+                            baseContainer.getOpenContext().getSide(),
+                            GuiBridge.GUI_EDITOR_PATTERN);
+                    if (sender.openContainer instanceof ContainerEditorPattern cep) {
+                        if (baseContainer.getTargetStack() != null) {
+                            // Получаем детали паттерна из ItemStack
+                            ItemStack patternStack = baseContainer.getTargetStack().getItemStack();
+                            if (patternStack.getItem() instanceof ICraftingPatternItem patternItem) {
+                                ICraftingPatternDetails patternDetails = patternItem.getPatternForItem(
+                                        patternStack,
+                                        sender.worldObj
+                                );
+                                if (patternDetails != null) {
+                                    cep.setPatternDetails(patternDetails, patternStack);
+                                    cep.getPatternValue().putStack(patternStack);
+                                }
+                            }
+                        }
+                        cep.detectAndSendChanges();
                     }
                 }
             } else {

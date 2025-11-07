@@ -7,7 +7,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.nbt.NBTTagCompound;
@@ -19,7 +18,6 @@ import appeng.container.implementations.ContainerInterfaceTerminal;
 import appeng.core.sync.AppEngPacket;
 import appeng.core.sync.GuiBridge;
 import appeng.core.sync.network.INetworkInfo;
-import appeng.helpers.IContainerCraftingPacket;
 import appeng.util.Platform;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -44,8 +42,7 @@ public class PacketOpenPatternEditorGUI extends AppEngPacket {
             if (nbt != null) {
                 tempPatternStack = ItemStack.loadItemStackFromNBT(nbt);
             }
-        } catch (IOException e) {
-        }
+        } catch (IOException e) {}
         patternStack = tempPatternStack;
     }
 
@@ -107,7 +104,6 @@ public class PacketOpenPatternEditorGUI extends AppEngPacket {
             }
         }
     }
-
 
     private NBTTagCompound readNBTFromStream(DataInputStream dis) throws IOException {
         short length = dis.readShort();

@@ -34,5 +34,6 @@ public enum InventoryAction {
     SET_PATTERN_MULTI,
     RENAME_PATTERN_ITEM,
     SET_PIN,
-    FIND_ITEMS
+    FIND_ITEMS,
+    EDIT_PATTERN_ITEM
 }
