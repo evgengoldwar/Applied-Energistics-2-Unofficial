@@ -24,12 +24,18 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 
+import appeng.core.sync.GuiBridge;
+import appeng.core.sync.packets.PacketOpenPatternEditorGUI;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryBasic;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -333,6 +339,11 @@ public class GuiInterfaceTerminal extends AEBaseGui
 
     @Override
     protected void mouseClicked(final int xCoord, final int yCoord, final int btn) {
+
+        if (handleMiddleClick(xCoord, yCoord, btn)) {
+            return;
+        }
+
         searchFieldInputs.mouseClicked(xCoord, yCoord, btn);
         searchFieldOutputs.mouseClicked(xCoord, yCoord, btn);
         searchFieldNames.mouseClicked(xCoord, yCoord, btn);
@@ -341,6 +352,30 @@ public class GuiInterfaceTerminal extends AEBaseGui
             return;
         }
         super.mouseClicked(xCoord, yCoord, btn);
+    }
+
+    private boolean handleMiddleClick(final int xCoord, final int yCoord, final int btn) {
+        if (btn != 2) return false;
+
+        ItemStack hoveredItemStack = getHoveredStack();
+        InterfaceTerminalEntry hoveredEntry = masterList.hoveredEntry;
+
+        if (hoveredItemStack == null || hoveredEntry == null || hoveredEntry.hoveredSlotIdx == -1) {
+            return false;
+        }
+
+        if (hoveredItemStack.getItem() instanceof ICraftingPatternItem) {
+            PacketOpenPatternEditorGUI packet = new PacketOpenPatternEditorGUI(
+                    GuiBridge.GUI_PATTERN_TERMINAL,
+                    hoveredEntry.id,
+                    hoveredEntry.hoveredSlotIdx,
+                    hoveredItemStack
+            );
+            NetworkHandler.instance.sendToServer(packet);
+            return true;
+        }
+
+        return false;
     }
 
     @Override

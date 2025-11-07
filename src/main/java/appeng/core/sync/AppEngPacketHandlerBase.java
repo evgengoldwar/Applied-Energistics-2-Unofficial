@@ -39,6 +39,7 @@ import appeng.core.sync.packets.PacketNEIDragClick;
 import appeng.core.sync.packets.PacketNEIRecipe;
 import appeng.core.sync.packets.PacketNetworkStatusSelected;
 import appeng.core.sync.packets.PacketNewStorageDimension;
+import appeng.core.sync.packets.PacketOpenPatternEditorGUI;
 import appeng.core.sync.packets.PacketOptimizePatterns;
 import appeng.core.sync.packets.PacketPaintedEntity;
 import appeng.core.sync.packets.PacketPartPlacement;
@@ -124,7 +125,8 @@ public class AppEngPacketHandlerBase {
         PACKET_NETWORK_STATUS_SELECTED(PacketNetworkStatusSelected.class),
         PACKET_PATTERN_ITEM_RENAMER(PacketPatternItemRenamer.class),
         PACKET_PINS_UPDATE(PacketPinsUpdate.class),
-        PACKET_HIGHLIGHT_BLOCKS(PacketHighlightBlockStorage.class);
+        PACKET_HIGHLIGHT_BLOCKS(PacketHighlightBlockStorage.class),
+        PACKET_OPEN_PATTERN_EDITOR_GUI(PacketOpenPatternEditorGUI.class);
 
         private final Class<? extends AppEngPacket> packetClass;
         private final Constructor<? extends AppEngPacket> packetConstructor;
