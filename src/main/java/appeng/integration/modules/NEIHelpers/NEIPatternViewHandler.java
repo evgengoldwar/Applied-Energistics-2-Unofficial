@@ -1,5 +1,8 @@
 package appeng.integration.modules.NEIHelpers;
 
+import static codechicken.lib.gui.GuiDraw.fontRenderer;
+import static net.minecraft.util.EnumChatFormatting.GRAY;
+
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,8 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import appeng.api.config.TerminalFontSize;
-import appeng.client.render.StackSizeRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -18,19 +19,18 @@ import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
+import appeng.api.config.TerminalFontSize;
 import appeng.api.implementations.ICraftingPatternItem;
 import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
+import appeng.client.render.StackSizeRenderer;
 import appeng.core.localization.GuiText;
 import codechicken.nei.PositionedStack;
 import codechicken.nei.api.IOverlayHandler;
 import codechicken.nei.api.IRecipeOverlayRenderer;
 import codechicken.nei.recipe.GuiRecipe;
 import codechicken.nei.recipe.IUsageHandler;
-
-import static codechicken.lib.gui.GuiDraw.fontRenderer;
-import static net.minecraft.util.EnumChatFormatting.GRAY;
 
 public class NEIPatternViewHandler implements IUsageHandler {
 
@@ -204,8 +204,7 @@ public class NEIPatternViewHandler implements IUsageHandler {
             int row = i / outputsCols;
             int col = i % outputsCols;
             int x = outputsOffsetX + col * 18 + 1;
-            int y = patternDetails.isCraftable() && i == 0 ? craftingOutputY + 1
-                    : SLOTS_OFFSET_Y + row * 18 + 1;
+            int y = patternDetails.isCraftable() && i == 0 ? craftingOutputY + 1 : SLOTS_OFFSET_Y + row * 18 + 1;
 
             if (i < outputs.size()) {
                 IAEItemStack aeOutput = outputs.get(i);
