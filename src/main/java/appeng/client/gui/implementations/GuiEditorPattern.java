@@ -26,6 +26,9 @@ import appeng.parts.reporting.PartInterfaceTerminal;
 
 public class GuiEditorPattern extends AEBaseGui {
 
+    private static final int INVENTORY_STRING_Y_OFFSET = 100;
+    private static final int PATTERN_STRING_Y_OFFSET = 182;
+
     private static final String SUBSITUTION_DISABLE = "0";
     private static final String SUBSITUTION_ENABLE = "1";
 
@@ -47,8 +50,8 @@ public class GuiEditorPattern extends AEBaseGui {
     public GuiEditorPattern(InventoryPlayer ip, PartInterfaceTerminal host) {
         super(new ContainerEditorPattern(ip, host));
         this.container = (ContainerEditorPattern) this.inventorySlots;
-        this.xSize = 176;
-        this.ySize = 222;
+        this.xSize = 256;
+        this.ySize = 256;
     }
 
     @Override
@@ -154,13 +157,9 @@ public class GuiEditorPattern extends AEBaseGui {
 
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
-        fontRendererObj.drawString("Pattern Editor", 8, 6, GuiColors.PatternTerminalTitle.getColor());
+        fontRendererObj.drawString("Pattern Editor", 8, this.ySize - PATTERN_STRING_Y_OFFSET, 0);
 
-        fontRendererObj.drawString(
-                GuiText.inventory.getLocal(),
-                8,
-                this.ySize - 96 + 2,
-                GuiColors.MEMonitorableInventory.getColor());
+        fontRendererObj.drawString(GuiText.inventory.getLocal(), 8, this.ySize - INVENTORY_STRING_Y_OFFSET, 0);
 
         ContainerEditorPattern container = (ContainerEditorPattern) this.inventorySlots;
         if (container.getPatternDetails() != null) {

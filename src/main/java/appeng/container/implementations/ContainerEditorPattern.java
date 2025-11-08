@@ -28,6 +28,17 @@ import appeng.util.item.AEItemStack;
 
 public class ContainerEditorPattern extends AEBaseContainer implements IOptionalSlotHost {
 
+    private static final int VANILLA_Y_OFFSET = 167;
+    private static final int VANILLA_SLOT_SIZE = 18;
+    private static final int CRAFTING_SLOTS_OFFSET_Y = 93;
+    private static final int CRAFTING_SLOTS_OFFSET_X = 18;
+    private static final int OUTPUT_SLOTS_OFFSET_Y_SMALL = 93;
+    private static final int OUTPUT_SLOTS_OFFSET_X_SMALL = 110;
+    private static final int PATTERN_SLOTS_OFFSET_Y_SMALL = 88;
+    private static final int PATTERN_SLOTS_OFFSET_X_SMALL = 147;
+    private static final int INPUT_SLOTS_OFFSET_Y_SMALL = 93;
+    private static final int INPUT_SLOTS_OFFSET_X_SMALL = 18;
+
     private final Slot patternValue;
     private ICraftingPatternDetails patternDetails;
     private final List<SlotFake> inputSlots = new ArrayList<>();
@@ -68,21 +79,33 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                         this.craftingSlots[x + y * 3] = new SlotFakeCraftingMatrix(
                                 this.crafting,
                                 x + y * 3,
-                                18 + x * 18,
-                                30 + y * 18));
+                                CRAFTING_SLOTS_OFFSET_X + x * VANILLA_SLOT_SIZE,
+                                CRAFTING_SLOTS_OFFSET_Y + y * VANILLA_SLOT_SIZE));
             }
         }
 
         // Создаем слоты для выходов
         for (int y = 0; y < 3; y++) {
             this.addSlotToContainer(
-                    this.outputSlotsArray[y] = new SlotPatternOutputs(output, this, y, 110, 30 + y * 18, 0, 0, 1));
+                    this.outputSlotsArray[y] = new SlotPatternOutputs(
+                            output,
+                            this,
+                            y,
+                            OUTPUT_SLOTS_OFFSET_X_SMALL,
+                            OUTPUT_SLOTS_OFFSET_Y_SMALL + y * VANILLA_SLOT_SIZE,
+                            0,
+                            0,
+                            1));
             this.outputSlotsArray[y].setRenderDisabled(false);
             this.outputSlots.add(this.outputSlotsArray[y]);
         }
 
         // Слот для отображения паттерна
-        patternValue = new SlotInaccessible(new AppEngInternalInventory(null, 1), 0, 34, 113);
+        patternValue = new SlotInaccessible(
+                new AppEngInternalInventory(null, 1),
+                0,
+                PATTERN_SLOTS_OFFSET_X_SMALL,
+                PATTERN_SLOTS_OFFSET_Y_SMALL);
         this.addSlotToContainer(patternValue);
 
         // Создаем inputSlots для совместимости
@@ -91,13 +114,13 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                 SlotFake inputSlot = new SlotFake(
                         new AppEngInternalInventory(null, INPUT_SLOTS),
                         x + y * 3,
-                        18 + x * 18,
-                        30 + y * 18);
+                        INPUT_SLOTS_OFFSET_X_SMALL + x * 18,
+                        INPUT_SLOTS_OFFSET_Y_SMALL + y * 18);
                 inputSlots.add(inputSlot);
             }
         }
 
-        this.bindPlayerInventory(ip, 0, 140);
+        this.bindPlayerInventory(ip, 0, VANILLA_Y_OFFSET);
         updateOutputSlotsVisibility();
     }
 
