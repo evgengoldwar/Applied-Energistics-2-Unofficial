@@ -13,7 +13,6 @@ package appeng.core.sync;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
-import appeng.container.implementations.ContainerEditorPattern;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
@@ -58,6 +57,7 @@ import appeng.container.implementations.ContainerCraftingCPU;
 import appeng.container.implementations.ContainerCraftingStatus;
 import appeng.container.implementations.ContainerCraftingTerm;
 import appeng.container.implementations.ContainerDrive;
+import appeng.container.implementations.ContainerEditorPattern;
 import appeng.container.implementations.ContainerFormationPlane;
 import appeng.container.implementations.ContainerGrinder;
 import appeng.container.implementations.ContainerIOPort;
@@ -226,7 +226,8 @@ public enum GuiBridge implements IGuiHandler {
     GUI_CELL_RESTRICTION(ContainerCellRestriction.class, ICellRestriction.class, GuiHostType.ITEM_OR_WORLD, null),
 
     GUI_PATTERN_ITEM_RENAMER(ContainerPatternItemRenamer.class, ITerminalHost.class, GuiHostType.ITEM_OR_WORLD, null),
-    GUI_EDITOR_PATTERN(ContainerEditorPattern.class, PartInterfaceTerminal.class, GuiHostType.ITEM_OR_WORLD, null);;
+    GUI_EDITOR_PATTERN(ContainerEditorPattern.class, PartInterfaceTerminal.class, GuiHostType.ITEM_OR_WORLD, null);
+    ;
 
     private final Class tileClass;
     private final Class containerClass;

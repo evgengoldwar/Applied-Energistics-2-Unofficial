@@ -124,6 +124,36 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
         }
     }
 
+    public void updatePattern(long entryId, int slot, ItemStack updatedPattern) {
+        InvTracker inv = this.trackedById.get(entryId);
+        if (inv != null && slot >= 0 && slot < inv.patterns.getSizeInventory()) {
+            // Обновляем слот в инвентаре
+            inv.patterns.setInventorySlotContents(slot, updatedPattern);
+
+            // Помечаем как грязный для синхронизации с клиентом
+            if (dirty == null) {
+                dirty = new PacketInterfaceTerminalUpdate();
+            }
+
+            int[] validIndices = { slot };
+            NBTTagList list = new NBTTagList();
+            NBTTagCompound item = new NBTTagCompound();
+
+            if (updatedPattern != null) {
+                updatedPattern.writeToNBT(item);
+            }
+            list.appendTag(item);
+
+            inv.updateNBT();
+            dirty.addOverwriteEntry(entryId).setItems(validIndices, list);
+            this.isDirty = true;
+
+            System.out.println("Pattern updated in interface terminal: entry=" + entryId + ", slot=" + slot);
+        } else {
+            System.out.println("Failed to update pattern: inv=" + inv + ", slot=" + slot);
+        }
+    }
+
     @Override
     public void doAction(final EntityPlayerMP player, final InventoryAction action, final int slot, final long id) {
         final InvTracker inv = this.trackedById.get(id);

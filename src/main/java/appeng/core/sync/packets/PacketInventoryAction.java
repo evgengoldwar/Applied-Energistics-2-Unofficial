@@ -12,19 +12,21 @@ package appeng.core.sync.packets;
 
 import java.io.IOException;
 
-import appeng.api.implementations.ICraftingPatternItem;
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.container.implementations.ContainerEditorPattern;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 
+import appeng.api.implementations.ICraftingPatternItem;
+import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.client.ClientHelper;
 import appeng.container.AEBaseContainer;
 import appeng.container.ContainerOpenContext;
 import appeng.container.implementations.ContainerCraftAmount;
+import appeng.container.implementations.ContainerEditorPattern;
+import appeng.container.implementations.ContainerInterfaceTerminal;
 import appeng.container.implementations.ContainerPatternItemRenamer;
 import appeng.container.implementations.ContainerPatternMulti;
 import appeng.container.implementations.ContainerPatternValueAmount;
@@ -172,27 +174,39 @@ public class PacketInventoryAction extends AppEngPacket {
                         cpir.detectAndSendChanges();
                     }
                 }
-            } else if (this.action == InventoryAction.EDIT_PATTERN_ITEM) {
+
+            } else if (action == InventoryAction.EDIT_PATTERN_ITEM) {
                 final ContainerOpenContext context = baseContainer.getOpenContext();
-                if (context != null) {
-                    final TileEntity te = context.getTile();
+                if (context != null && baseContainer instanceof ContainerInterfaceTerminal sourceContainer) {
+
+                    // Используем существующий метод открытия GUI
                     Platform.openGUI(
                             sender,
-                            te,
+                            context.getTile(),
                             baseContainer.getOpenContext().getSide(),
                             GuiBridge.GUI_EDITOR_PATTERN);
+
+                    // После открытия GUI модифицируем контейнер
                     if (sender.openContainer instanceof ContainerEditorPattern cep) {
+                        // Сохраняем ссылку на sourceContainer в NBT или временном хранилище
+                        NBTTagCompound extraData = new NBTTagCompound();
+                        extraData.setLong("sourceEntryId", id);
+                        extraData.setInteger("sourceSlot", slot);
+
+                        // Передаем данные в контейнер
+                        cep.setSourceData(sourceContainer, id, slot);
+
                         if (baseContainer.getTargetStack() != null) {
-                            // Получаем детали паттерна из ItemStack
-                            ItemStack patternStack = baseContainer.getTargetStack().getItemStack();
-                            if (patternStack.getItem() instanceof ICraftingPatternItem patternItem) {
-                                ICraftingPatternDetails patternDetails = patternItem.getPatternForItem(
-                                        patternStack,
-                                        sender.worldObj
-                                );
+                            ItemStack sourceStack = baseContainer.getTargetStack().getItemStack();
+                            System.out.println("Source stack: " + sourceStack);
+
+                            if (sourceStack.getItem() instanceof ICraftingPatternItem patternItem) {
+                                ICraftingPatternDetails patternDetails = patternItem
+                                        .getPatternForItem(sourceStack, sender.worldObj);
                                 if (patternDetails != null) {
-                                    cep.setPatternDetails(patternDetails, patternStack);
-                                    cep.getPatternValue().putStack(patternStack);
+                                    cep.setPatternDetails(patternDetails, sourceStack);
+                                    cep.getPatternValue().putStack(sourceStack.copy());
+                                    System.out.println("Pattern details loaded successfully");
                                 }
                             }
                         }

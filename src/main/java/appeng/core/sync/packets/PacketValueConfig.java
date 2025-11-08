@@ -21,6 +21,9 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTException;
+import net.minecraft.nbt.NBTTagCompound;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
@@ -32,7 +35,9 @@ import appeng.container.implementations.ContainerCellRestriction;
 import appeng.container.implementations.ContainerCellWorkbench;
 import appeng.container.implementations.ContainerCraftConfirm;
 import appeng.container.implementations.ContainerCraftingCPU;
+import appeng.container.implementations.ContainerEditorPattern;
 import appeng.container.implementations.ContainerInterface;
+import appeng.container.implementations.ContainerInterfaceTerminal;
 import appeng.container.implementations.ContainerLevelEmitter;
 import appeng.container.implementations.ContainerMEMonitorable;
 import appeng.container.implementations.ContainerNetworkTool;
@@ -177,6 +182,50 @@ public class PacketValueConfig extends AppEngPacket {
         } else if (c instanceof ContainerNetworkTool) {
             if (this.Name.equals("NetworkTool") && this.Value.equals("Toggle")) {
                 ((ContainerNetworkTool) c).toggleFacadeMode();
+            }
+        } else if (this.Name.startsWith("PatternEditor.")) {
+            if (c instanceof final ContainerEditorPattern cep) {
+                switch (this.Name) {
+                    case "PatternEditor.CraftMode" -> cep.setCraftingMode(this.Value.equals("1"));
+                    case "PatternEditor.Encode" -> cep.encodePattern();
+                    case "PatternEditor.Clear" -> cep.clear();
+                    case "PatternEditor.Substitute" -> cep.setSubstitute(this.Value.equals("1"));
+                    case "PatternEditor.BeSubstitute" -> cep.setBeSubstitute(this.Value.equals("1"));
+                    case "PatternEditor.Double" -> cep.doubleStacks(Integer.parseInt(this.Value));
+                }
+            }
+        } else if (this.Name.equals("InterfaceTerminal.UpdatePattern")) {
+            // Обработка обновления паттерна в интерфейс терминале
+            if (c instanceof ContainerInterfaceTerminal cit) {
+                String[] parts = this.Value.split(":", 3);
+                if (parts.length == 3) {
+                    long entryId = Long.parseLong(parts[0]);
+                    int slot = Integer.parseInt(parts[1]);
+                    ItemStack patternStack = null;
+
+                    if (!"null".equals(parts[2])) {
+                        try {
+                            NBTTagCompound nbt = (NBTTagCompound) JsonToNBT.func_150315_a(parts[2]);
+                            patternStack = ItemStack.loadItemStackFromNBT(nbt);
+
+                            // Гарантируем, что размер стека правильный
+                            if (patternStack != null && patternStack.stackSize <= 0) {
+                                patternStack.stackSize = 1;
+                                System.out.println("Fixed stack size to 1");
+                            }
+
+                            if (patternStack != null) {
+                                System.out.println("Loaded pattern stack: " + patternStack.getDisplayName() +
+                                        ", count: " + patternStack.stackSize);
+                            }
+                        } catch (NBTException e) {
+                            System.out.println("Failed to parse pattern NBT: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+
+                    cit.updatePattern(entryId, slot, patternStack);
+                }
             }
         } else if (c instanceof IConfigurableObject) {
             final IConfigManager cm = ((IConfigurableObject) c).getConfigManager();

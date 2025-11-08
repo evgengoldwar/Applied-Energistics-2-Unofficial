@@ -1,40 +1,46 @@
 package appeng.container.implementations;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.container.guisync.GuiSync;
-import appeng.container.slot.SlotFake;
-import appeng.parts.reporting.PartInterfaceTerminal;
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
 
-import appeng.api.implementations.ICraftingPatternItem;
-import appeng.api.networking.IGrid;
-import appeng.api.networking.security.IActionHost;
-import appeng.api.storage.ITerminalHost;
+import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.container.AEBaseContainer;
+import appeng.container.guisync.GuiSync;
+import appeng.container.slot.IOptionalSlotHost;
+import appeng.container.slot.OptionalSlotFake;
+import appeng.container.slot.SlotFake;
+import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotInaccessible;
+import appeng.container.slot.SlotPatternOutputs;
+import appeng.parts.reporting.PartInterfaceTerminal;
 import appeng.tile.inventory.AppEngInternalInventory;
+import appeng.tile.inventory.BiggerAppEngInventory;
 import appeng.util.item.AEItemStack;
-import java.util.List;
-import java.util.ArrayList;
 
-public class ContainerEditorPattern extends AEBaseContainer {
+public class ContainerEditorPattern extends AEBaseContainer implements IOptionalSlotHost {
 
     private final Slot patternValue;
     private ICraftingPatternDetails patternDetails;
     private final List<SlotFake> inputSlots = new ArrayList<>();
     private final List<SlotFake> outputSlots = new ArrayList<>();
     private ItemStack originalPatternStack;
+    private final IInventory crafting;
+    private final SlotFakeCraftingMatrix[] craftingSlots = new SlotFakeCraftingMatrix[9];
+    private final OptionalSlotFake[] outputSlotsArray = new OptionalSlotFake[3];
+    private final AppEngInternalInventory cOut = new AppEngInternalInventory(null, 1);
 
-    // Слоты для входов (3x3 сетка как в верстаке)
     private static final int INPUT_SLOTS = 9;
-    // Слоты для выходов (до 3 слотов)
     private static final int OUTPUT_SLOTS = 3;
-
+    private static final int OUTPUT_SLOTS_CRAFTING_MODE = 1;
     @GuiSync(97)
     public boolean craftingMode = true;
 
@@ -44,35 +50,64 @@ public class ContainerEditorPattern extends AEBaseContainer {
     @GuiSync(95)
     public boolean beSubstitute = true;
 
+    private ContainerInterfaceTerminal sourceContainer;
+    private long sourceEntryId = -1;
+    private int sourceSlot = -1;
+
     public ContainerEditorPattern(final InventoryPlayer ip, final PartInterfaceTerminal te) {
         super(ip, te);
 
-        // Слот для отображения самого паттерна
-        patternValue = new SlotInaccessible(new AppEngInternalInventory(null, 1), 0, 34, 113);
-        this.addSlotToContainer(patternValue);
+        final AppEngInternalInventory pattern = new AppEngInternalInventory(null, 2);
+        final AppEngInternalInventory output = new BiggerAppEngInventory(null, 3) {};
+        this.crafting = new BiggerAppEngInventory(null, 9) {};
 
-        // Создаем слоты для входов (3x3 сетка) - FAKE слоты для взаимодействия
+        // Создаем слоты для крафтовой сетки 3x3
         for (int y = 0; y < 3; y++) {
             for (int x = 0; x < 3; x++) {
-                SlotFake inputSlot = new SlotFake(new AppEngInternalInventory(null, INPUT_SLOTS), x + y * 3, 18 + x * 18, 17 + y * 18);
-                inputSlots.add(inputSlot);
-                this.addSlotToContainer(inputSlot);
+                this.addSlotToContainer(
+                        this.craftingSlots[x + y * 3] = new SlotFakeCraftingMatrix(
+                                this.crafting,
+                                x + y * 3,
+                                18 + x * 18,
+                                30 + y * 18));
             }
         }
 
-        // Создаем слоты для выходов - FAKE слоты для взаимодействия
-        for (int y = 0; y < OUTPUT_SLOTS; y++) {
-            SlotFake outputSlot = new SlotFake(new AppEngInternalInventory(null, OUTPUT_SLOTS), y, 110, 17 + y * 18);
-            outputSlots.add(outputSlot);
-            this.addSlotToContainer(outputSlot);
+        // Создаем слоты для выходов
+        for (int y = 0; y < 3; y++) {
+            this.addSlotToContainer(
+                    this.outputSlotsArray[y] = new SlotPatternOutputs(output, this, y, 110, 30 + y * 18, 0, 0, 1));
+            this.outputSlotsArray[y].setRenderDisabled(false);
+            this.outputSlots.add(this.outputSlotsArray[y]);
         }
 
-        this.bindPlayerInventory(ip, 0, 0);
+        // Слот для отображения паттерна
+        patternValue = new SlotInaccessible(new AppEngInternalInventory(null, 1), 0, 34, 113);
+        this.addSlotToContainer(patternValue);
+
+        // Создаем inputSlots для совместимости
+        for (int y = 0; y < 3; y++) {
+            for (int x = 0; x < 3; x++) {
+                SlotFake inputSlot = new SlotFake(
+                        new AppEngInternalInventory(null, INPUT_SLOTS),
+                        x + y * 3,
+                        18 + x * 18,
+                        30 + y * 18);
+                inputSlots.add(inputSlot);
+            }
+        }
+
+        this.bindPlayerInventory(ip, 0, 140);
+        updateOutputSlotsVisibility();
     }
 
-    public IGrid getGrid() {
-        final IActionHost h = ((IActionHost) getTarget());
-        return h.getActionableNode().getGrid();
+    // Добавьте методы для установки исходного входа и слота
+    public void setSourceData(ContainerInterfaceTerminal sourceContainer, long sourceEntryId, int sourceSlot) {
+        this.sourceContainer = sourceContainer;
+        this.sourceEntryId = sourceEntryId;
+        this.sourceSlot = sourceSlot;
+        System.out.println(
+                "Source data set: container=" + sourceContainer + ", entry=" + sourceEntryId + ", slot=" + sourceSlot);
     }
 
     public World getWorld() {
@@ -113,7 +148,7 @@ public class ContainerEditorPattern extends AEBaseContainer {
             if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack aeStack) {
                 ItemStack stack = aeStack.getItemStack();
                 if (stack != null) {
-                    inputSlots.get(i).putStack(stack.copy());
+                    craftingSlots[i].putStack(stack.copy());
                 }
             }
         }
@@ -124,7 +159,7 @@ public class ContainerEditorPattern extends AEBaseContainer {
             if (outputs[i] instanceof appeng.api.storage.data.IAEItemStack aeStack) {
                 ItemStack stack = aeStack.getItemStack();
                 if (stack != null) {
-                    outputSlots.get(i).putStack(stack.copy());
+                    outputSlotsArray[i].putStack(stack.copy());
                 }
             }
         }
@@ -136,18 +171,24 @@ public class ContainerEditorPattern extends AEBaseContainer {
     }
 
     public void clear() {
-        for (Slot slot : inputSlots) {
+        for (Slot slot : craftingSlots) {
             slot.putStack(null);
         }
-        for (Slot slot : outputSlots) {
+        for (Slot slot : outputSlotsArray) {
             slot.putStack(null);
         }
     }
 
     public void encodePattern() {
-        if (originalPatternStack == null) return;
+        if (originalPatternStack == null) {
+            System.out.println("Cannot encode: originalPatternStack is null");
+            return;
+        }
+
+        System.out.println("Encoding pattern...");
 
         ItemStack patternStack = originalPatternStack.copy();
+        patternStack.stackSize = 1;
 
         // Получаем входы и выходы из слотов
         final ItemStack[] in = getInputs();
@@ -155,6 +196,7 @@ public class ContainerEditorPattern extends AEBaseContainer {
 
         // Проверяем что есть хотя бы один вход и выход
         if (in == null || out == null) {
+            System.out.println("Cannot encode: inputs or outputs are null");
             return;
         }
 
@@ -169,7 +211,8 @@ public class ContainerEditorPattern extends AEBaseContainer {
                 tagIn.appendTag(createItemTag(i));
             } else {
                 if (i != null) {
-                    tagIn.appendTag(appeng.util.Platform.writeStackNBT(AEItemStack.create(i), new NBTTagCompound(), true));
+                    tagIn.appendTag(
+                            appeng.util.Platform.writeStackNBT(AEItemStack.create(i), new NBTTagCompound(), true));
                 } else {
                     tagIn.appendTag(new NBTTagCompound());
                 }
@@ -182,7 +225,8 @@ public class ContainerEditorPattern extends AEBaseContainer {
                 tagOut.appendTag(createItemTag(i));
             } else {
                 if (i != null) {
-                    tagOut.appendTag(appeng.util.Platform.writeStackNBT(AEItemStack.create(i), new NBTTagCompound(), true));
+                    tagOut.appendTag(
+                            appeng.util.Platform.writeStackNBT(AEItemStack.create(i), new NBTTagCompound(), true));
                 } else {
                     tagOut.appendTag(new NBTTagCompound());
                 }
@@ -204,19 +248,48 @@ public class ContainerEditorPattern extends AEBaseContainer {
 
         patternStack.setTagCompound(encodedValue);
 
-        // Заменяем оригинальный паттерн
+        // Обновляем локальную копию
         this.originalPatternStack = patternStack;
         this.patternValue.putStack(patternStack);
 
-        // TODO: Отправить пакет для обновления паттерна в интерфейсном терминале
+        System.out.println("Pattern encoded locally, updating source terminal...");
+
+        // Сохраняем обратно в терминал
+        updateSourceTerminal(patternStack);
+    }
+
+    // Метод для обновления исходного терминала
+    private void updateSourceTerminal(ItemStack updatedPattern) {
+        if (sourceEntryId >= 0 && sourceSlot >= 0 && sourceContainer != null) {
+            try {
+                System.out.println("Updating source terminal: entry=" + sourceEntryId + ", slot=" + sourceSlot);
+
+                // Вызываем метод обновления в контейнере интерфейс терминала
+                sourceContainer.updatePattern(sourceEntryId, sourceSlot, updatedPattern);
+
+                System.out.println("Pattern updated in interface terminal successfully");
+
+            } catch (final Exception e) {
+                System.out.println("Error updating source terminal: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println(
+                    "Cannot update source terminal: invalid source data (entry=" + sourceEntryId
+                            + ", slot="
+                            + sourceSlot
+                            + ", container="
+                            + sourceContainer
+                            + ")");
+        }
     }
 
     private ItemStack[] getInputs() {
         final ItemStack[] input = new ItemStack[9];
         boolean hasValue = false;
 
-        for (int x = 0; x < this.inputSlots.size(); x++) {
-            input[x] = this.inputSlots.get(x).getStack();
+        for (int x = 0; x < this.craftingSlots.length; x++) {
+            input[x] = this.craftingSlots[x].getStack();
             if (input[x] != null) {
                 hasValue = true;
             }
@@ -232,7 +305,7 @@ public class ContainerEditorPattern extends AEBaseContainer {
     private ItemStack[] getOutputs() {
         if (this.craftingMode) {
             // Для крафтового режима - только первый выход
-            final ItemStack out = this.outputSlots.get(0).getStack();
+            final ItemStack out = this.outputSlotsArray[0].getStack();
             if (out != null && out.stackSize > 0) {
                 return new ItemStack[] { out };
             }
@@ -241,7 +314,7 @@ public class ContainerEditorPattern extends AEBaseContainer {
             final List<ItemStack> list = new ArrayList<>(3);
             boolean hasValue = false;
 
-            for (final SlotFake outputSlot : this.outputSlots) {
+            for (final OptionalSlotFake outputSlot : this.outputSlotsArray) {
                 final ItemStack out = outputSlot.getStack();
                 if (out != null && out.stackSize > 0) {
                     list.add(out);
@@ -269,10 +342,10 @@ public class ContainerEditorPattern extends AEBaseContainer {
     }
 
     private void clearSlots() {
-        for (Slot slot : inputSlots) {
+        for (Slot slot : craftingSlots) {
             slot.putStack(null);
         }
-        for (Slot slot : outputSlots) {
+        for (Slot slot : outputSlotsArray) {
             slot.putStack(null);
         }
     }
@@ -296,18 +369,27 @@ public class ContainerEditorPattern extends AEBaseContainer {
     public void setCraftingMode(boolean craftingMode) {
         this.craftingMode = craftingMode;
         updateOutputSlotsVisibility();
+        this.detectAndSendChanges();
+    }
+
+    public void setSubstitute(boolean substitute) {
+        this.substitute = substitute;
+    }
+
+    public void setBeSubstitute(boolean beSubstitute) {
+        this.beSubstitute = beSubstitute;
     }
 
     private void updateOutputSlotsVisibility() {
         if (!this.craftingMode) {
             // Processing mode - показываем все 3 слота
-            for (int i = 0; i < outputSlots.size(); i++) {
-//                outputSlots.get(i).setEnabled(true);
+            for (int i = 0; i < outputSlotsArray.length; i++) {
+                outputSlotsArray[i].setRenderDisabled(false);
             }
         } else {
             // Crafting mode - показываем только первый слот
-            for (int i = 0; i < outputSlots.size(); i++) {
-//                outputSlots.get(i).setEnabled(i == 0);
+            for (int i = 0; i < outputSlotsArray.length; i++) {
+                outputSlotsArray[i].setRenderDisabled(i != 0);
             }
         }
     }
@@ -324,4 +406,41 @@ public class ContainerEditorPattern extends AEBaseContainer {
         return originalPatternStack;
     }
 
+    @Override
+    public boolean isSlotEnabled(int idx) {
+        if (idx == 1) {
+            return !this.craftingMode;
+        } else if (idx == 2) {
+            return this.craftingMode;
+        } else {
+            return false;
+        }
+    }
+
+    // Методы для умножения/деления стаков
+    public void doubleStacks(int val) {
+        multiplyOrDivideStacks(
+                ((val & 1) != 0 ? ContainerPatternTerm.MULTIPLE_OF_BUTTON_CLICK_ON_SHIFT
+                        : ContainerPatternTerm.MULTIPLE_OF_BUTTON_CLICK) * ((val & 2) != 0 ? -1 : 1));
+    }
+
+    public void multiplyOrDivideStacks(int multi) {
+        if (!isCraftingMode()) {
+            if (ContainerPatternTerm.canMultiplyOrDivide(this.craftingSlots, multi)
+                    && ContainerPatternTerm.canMultiplyOrDivide(this.outputSlotsArray, multi)) {
+                ContainerPatternTerm.multiplyOrDivideStacksInternal(this.craftingSlots, multi);
+                ContainerPatternTerm.multiplyOrDivideStacksInternal(this.outputSlotsArray, multi);
+            }
+            this.detectAndSendChanges();
+        }
+    }
+
+    @Override
+    public void onContainerClosed(final EntityPlayer player) {
+        // Автоматически сохраняем изменения при закрытии GUI
+        if (originalPatternStack != null && sourceEntryId >= 0) {
+            encodePattern(); // Сохраняем текущее состояние
+        }
+        super.onContainerClosed(player);
+    }
 }
