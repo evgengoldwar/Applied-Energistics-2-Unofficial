@@ -13,6 +13,7 @@ import appeng.parts.reporting.PartInterfaceTerminal;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 import org.lwjgl.input.Keyboard;
@@ -25,6 +26,10 @@ import appeng.core.localization.GuiText;
 import java.io.IOException;
 
 public class GuiEditorPattern extends AEBaseGui {
+
+    private static final int VANILLA_Y_OFFSET = 167;
+    private static final int INVENTORY_STRING_Y_OFFSET = 100;
+    private static final int PATTERN_STRING_Y_OFFSET = 182;
 
     private static final String SUBSITUTION_DISABLE = "0";
     private static final String SUBSITUTION_ENABLE = "1";
@@ -47,77 +52,79 @@ public class GuiEditorPattern extends AEBaseGui {
         super(new ContainerEditorPattern(ip, host));
         this.container = (ContainerEditorPattern) this.inventorySlots;
         this.xSize = 256;
-        this.ySize = 222;
+        this.ySize = 256;
     }
 
     @Override
     public void initGui() {
         super.initGui();
 
-        this.tabCraftButton = new GuiTabButton(
-                this.guiLeft + 173,
-                this.guiTop + this.ySize - 177,
-                new ItemStack(Blocks.crafting_table),
-                GuiText.CraftingPattern.getLocal(),
-                itemRender);
-        this.buttonList.add(this.tabCraftButton);
+        settingsVanillaGui();
 
-        this.tabProcessButton = new GuiTabButton(
-                this.guiLeft + 173,
-                this.guiTop + this.ySize - 177,
-                new ItemStack(Blocks.furnace),
-                GuiText.ProcessingPattern.getLocal(),
-                itemRender);
-        this.buttonList.add(this.tabProcessButton);
+//        this.tabCraftButton = new GuiTabButton(
+//                this.guiLeft + 173,
+//                this.guiTop + this.ySize - 177,
+//                new ItemStack(Blocks.crafting_table),
+//                GuiText.CraftingPattern.getLocal(),
+//                itemRender);
+//        this.buttonList.add(this.tabCraftButton);
+//
+//        this.tabProcessButton = new GuiTabButton(
+//                this.guiLeft + 173,
+//                this.guiTop + this.ySize - 177,
+//                new ItemStack(Blocks.furnace),
+//                GuiText.ProcessingPattern.getLocal(),
+//                itemRender);
+//        this.buttonList.add(this.tabProcessButton);
+//
+//        this.substitutionsEnabledBtn = new GuiImgButton(
+//                this.guiLeft + 84,
+//                this.guiTop + this.ySize - 163,
+//                Settings.ACTIONS,
+//                ItemSubstitution.ENABLED);
+//        this.substitutionsEnabledBtn.setHalfSize(true);
+//        this.buttonList.add(this.substitutionsEnabledBtn);
+//
+//        this.substitutionsDisabledBtn = new GuiImgButton(
+//                this.guiLeft + 84,
+//                this.guiTop + this.ySize - 163,
+//                Settings.ACTIONS,
+//                ItemSubstitution.DISABLED);
+//        this.substitutionsDisabledBtn.setHalfSize(true);
+//        this.buttonList.add(this.substitutionsDisabledBtn);
+//
+//        this.beSubstitutionsEnabledBtn = new GuiImgButton(
+//                this.guiLeft + 84,
+//                this.guiTop + this.ySize - 153,
+//                Settings.ACTIONS,
+//                PatternBeSubstitution.ENABLED);
+//        this.beSubstitutionsEnabledBtn.setHalfSize(true);
+//        this.buttonList.add(this.beSubstitutionsEnabledBtn);
+//
+//        this.beSubstitutionsDisabledBtn = new GuiImgButton(
+//                this.guiLeft + 84,
+//                this.guiTop + this.ySize - 153,
+//                Settings.ACTIONS,
+//                PatternBeSubstitution.DISABLED);
+//        this.beSubstitutionsDisabledBtn.setHalfSize(true);
+//        this.buttonList.add(this.beSubstitutionsDisabledBtn);
+//
+//        this.clearBtn = new GuiImgButton(
+//                this.guiLeft + 74,
+//                this.guiTop + this.ySize - 163,
+//                Settings.ACTIONS,
+//                ActionItems.CLOSE);
+//        this.clearBtn.setHalfSize(true);
+//        this.buttonList.add(this.clearBtn);
+//
+//        this.encodeBtn = new GuiImgButton(
+//                this.guiLeft + 147,
+//                this.guiTop + this.ySize - 142,
+//                Settings.ACTIONS,
+//                ActionItems.ENCODE);
+//        this.buttonList.add(this.encodeBtn);
 
-        this.substitutionsEnabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + this.ySize - 163,
-                Settings.ACTIONS,
-                ItemSubstitution.ENABLED);
-        this.substitutionsEnabledBtn.setHalfSize(true);
-        this.buttonList.add(this.substitutionsEnabledBtn);
-
-        this.substitutionsDisabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + this.ySize - 163,
-                Settings.ACTIONS,
-                ItemSubstitution.DISABLED);
-        this.substitutionsDisabledBtn.setHalfSize(true);
-        this.buttonList.add(this.substitutionsDisabledBtn);
-
-        this.beSubstitutionsEnabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + this.ySize - 153,
-                Settings.ACTIONS,
-                PatternBeSubstitution.ENABLED);
-        this.beSubstitutionsEnabledBtn.setHalfSize(true);
-        this.buttonList.add(this.beSubstitutionsEnabledBtn);
-
-        this.beSubstitutionsDisabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + this.ySize - 153,
-                Settings.ACTIONS,
-                PatternBeSubstitution.DISABLED);
-        this.beSubstitutionsDisabledBtn.setHalfSize(true);
-        this.buttonList.add(this.beSubstitutionsDisabledBtn);
-
-        this.clearBtn = new GuiImgButton(
-                this.guiLeft + 74,
-                this.guiTop + this.ySize - 163,
-                Settings.ACTIONS,
-                ActionItems.CLOSE);
-        this.clearBtn.setHalfSize(true);
-        this.buttonList.add(this.clearBtn);
-
-        this.encodeBtn = new GuiImgButton(
-                this.guiLeft + 147,
-                this.guiTop + this.ySize - 142,
-                Settings.ACTIONS,
-                ActionItems.ENCODE);
-        this.buttonList.add(this.encodeBtn);
-
-        this.updateButtonVisibility();
+//        this.updateButtonVisibility();
     }
 
     @Override
@@ -154,20 +161,24 @@ public class GuiEditorPattern extends AEBaseGui {
 
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
-        fontRendererObj.drawString("PatternEditor", 8, 6, 0);
-
-        ContainerEditorPattern container = (ContainerEditorPattern) this.inventorySlots;
-        if (container.getPatternDetails() != null) {
-            String mode = container.isCraftingMode() ?
-                    GuiText.CraftingPattern.getLocal() : GuiText.ProcessingPattern.getLocal();
-            fontRendererObj.drawString(mode, 120, 6, 0);
-        }
+        fontRendererObj.drawString(
+                "Pattern Editor",
+                8,
+                this.ySize - PATTERN_STRING_Y_OFFSET,
+                0);
 
         fontRendererObj.drawString(
                 GuiText.inventory.getLocal(),
                 8,
-                this.ySize - 96 + 2,
+                this.ySize - INVENTORY_STRING_Y_OFFSET,
                 0);
+
+//        ContainerEditorPattern container = (ContainerEditorPattern) this.inventorySlots;
+//        if (container.getPatternDetails() != null) {
+//            String mode = container.isCraftingMode() ?
+//                    GuiText.CraftingPattern.getLocal() : GuiText.ProcessingPattern.getLocal();
+//            fontRendererObj.drawString(mode, 120, 6, 0);
+//        }
     }
 
     private void updateButtonVisibility() {
@@ -193,7 +204,7 @@ public class GuiEditorPattern extends AEBaseGui {
 
     @Override
     public void drawScreen(final int mouseX, final int mouseY, final float btn) {
-        this.updateButtonVisibility();
+//        this.updateButtonVisibility();
         super.drawScreen(mouseX, mouseY, btn);
     }
 
@@ -212,8 +223,11 @@ public class GuiEditorPattern extends AEBaseGui {
         }
     }
 
-    public void setPatternDetails(ICraftingPatternDetails details, ItemStack stack) {
-        ContainerEditorPattern container = (ContainerEditorPattern) this.inventorySlots;
-        container.setPatternDetails(details, stack);
+    private void settingsVanillaGui() {
+        for (Slot slot : this.inventorySlots.inventorySlots) {
+            if (slot.inventory instanceof InventoryPlayer) {
+                slot.yDisplayPosition += VANILLA_Y_OFFSET;
+            }
+        }
     }
 }
