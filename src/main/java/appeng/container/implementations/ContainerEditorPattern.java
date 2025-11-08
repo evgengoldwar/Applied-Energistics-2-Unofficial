@@ -68,7 +68,6 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     public ContainerEditorPattern(final InventoryPlayer ip, final PartInterfaceTerminal te) {
         super(ip, te);
 
-        final AppEngInternalInventory pattern = new AppEngInternalInventory(null, 2);
         final AppEngInternalInventory output = new BiggerAppEngInventory(null, 3) {};
         this.crafting = new BiggerAppEngInventory(null, 9) {};
 
