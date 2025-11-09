@@ -3,6 +3,7 @@ package appeng.container.implementations;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotPatternTerm;
 import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.tile.inventory.InvOperation;
@@ -11,6 +12,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.nbt.NBTTagCompound;
@@ -56,7 +58,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private final SlotFakeCraftingMatrix[] craftingSlots = new SlotFakeCraftingMatrix[9];
 
     // Разделенные слоты как в ContainerPatternTerm
-    private final OptionalSlotFake craftingOutputSlot; // Отдельный слот для крафтинга
+    private final AppEngSlot craftingOutputSlot; // Отдельный слот для крафтинга
     private final OptionalSlotFake[] processingOutputSlots = new OptionalSlotFake[3]; // Только для процессинга
 
     private final AppEngInternalInventory cOut = new AppEngInternalInventory(null, 1);
@@ -75,10 +77,10 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private int sourceSlot = -1;
 
     // Временное хранилище для данных при переключении режимов
-    private ItemStack[] savedCraftingInputs = new ItemStack[9];
-    private ItemStack[] savedCraftingOutputs = new ItemStack[1];
-    private ItemStack[] savedProcessingInputs = new ItemStack[9];
-    private ItemStack[] savedProcessingOutputs = new ItemStack[3];
+    private final ItemStack[] savedCraftingInputs = new ItemStack[9];
+    private final ItemStack[] savedCraftingOutputs = new ItemStack[1];
+    private final ItemStack[] savedProcessingInputs = new ItemStack[9];
+    private final ItemStack[] savedProcessingOutputs = new ItemStack[3];
 
     public ContainerEditorPattern(final InventoryPlayer ip, final PartInterfaceTerminal te) {
         super(ip, te);
@@ -118,15 +120,21 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         }
 
         // Создаем выходной слот для крафтинга - ОТДЕЛЬНЫЙ (как craftSlot в ContainerPatternTerm)
-        this.craftingOutputSlot = new OptionalSlotFake(
+        this.craftingOutputSlot = new AppEngSlot(
                 this.cOut,
-                this,
                 0,
                 OUTPUT_SLOTS_OFFSET_X_SMALL,
-                OUTPUT_SLOTS_OFFSET_Y_SMALL,
-                0,
-                0,
-                2);
+                OUTPUT_SLOTS_OFFSET_Y_SMALL) {
+            @Override
+            public void putStack(ItemStack stack) {
+
+            }
+
+            @Override
+            public boolean canTakeStack(EntityPlayer player) {
+                return false;
+            }
+        };
         this.addSlotToContainer(this.craftingOutputSlot);
         // НЕ добавляем в общие списки!
 
@@ -406,7 +414,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         this.patternValue.putStack(patternStack);
 
         updateSourceTerminal(patternStack);
-
+        debugCraftingOutputSlot();
     }
 
     private NBTTagCompound createItemTag(final ItemStack i) {
@@ -545,7 +553,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         return inputSlots;
     }
 
-    public OptionalSlotFake getCraftingOutputSlot() {
+    public AppEngSlot getCraftingOutputSlot() {
         return craftingOutputSlot;
     }
 
@@ -798,6 +806,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         }
     }
 
+
+
     private void debugPatternInfo() {
         System.out.println(" ");
         System.out.println("=== DEBUG PATTERN INFO ===");
@@ -1033,5 +1043,72 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
             System.out.println("Encoded NBT: null");
         }
         System.out.println("=== END ENCODED NBT ===");
+    }
+
+    private void debugCraftingOutputSlot() {
+        System.out.println("=== DETAILED CRAFTING OUTPUT SLOT DEBUG ===");
+
+        System.out.println("Crafting Mode: " + this.craftingMode);
+
+        // Информация о cOut инвентаре
+        ItemStack cOutStack = this.cOut.getStackInSlot(0);
+        System.out.println("cOut Inventory:");
+        System.out.println("  Stack: " + (cOutStack != null ? cOutStack.getDisplayName() : "null"));
+        System.out.println("  StackSize: " + (cOutStack != null ? cOutStack.stackSize : "N/A"));
+        System.out.println("  Has NBT: " + (cOutStack != null && cOutStack.hasTagCompound()));
+        if (cOutStack != null && cOutStack.hasTagCompound()) {
+            debugNBTData("cOut NBT", cOutStack.getTagCompound());
+        }
+
+        // Информация о craftingOutputSlot
+        ItemStack slotStack = this.craftingOutputSlot.getStack();
+        System.out.println("Crafting Output Slot:");
+        System.out.println("  Stack: " + (slotStack != null ? slotStack.getDisplayName() : "null"));
+        System.out.println("  StackSize: " + (slotStack != null ? slotStack.stackSize : "N/A"));
+        System.out.println("  Has NBT: " + (slotStack != null && slotStack.hasTagCompound()));
+        if (slotStack != null && slotStack.hasTagCompound()) {
+            debugNBTData("Slot NBT", slotStack.getTagCompound());
+        }
+
+        // Информация о AEStack внутри слота (если доступно)
+        try {
+            java.lang.reflect.Field aeStackField = craftingOutputSlot.getClass().getDeclaredField("aeStack");
+            aeStackField.setAccessible(true);
+            Object aeStack = aeStackField.get(craftingOutputSlot);
+            System.out.println("AEStack in slot: " + (aeStack != null ? aeStack.toString() : "null"));
+            if (aeStack != null) {
+                System.out.println("  AEStack Class: " + aeStack.getClass().getName());
+                if (aeStack instanceof appeng.api.storage.data.IAEItemStack) {
+                    appeng.api.storage.data.IAEItemStack aeItemStack = (appeng.api.storage.data.IAEItemStack) aeStack;
+                    System.out.println("  AEStack StackSize: " + aeItemStack.getStackSize());
+                    System.out.println("  AEStack Item: " + (aeItemStack.getItem() != null ? aeItemStack.getItem().getUnlocalizedName() : "null"));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Cannot access AEStack field: " + e.getMessage());
+        }
+
+        // Информация о текущем рецепте крафтинга
+        System.out.println("Current Crafting Recipe:");
+        InventoryCrafting tempCrafting = new InventoryCrafting(new DummyContainer(), 3, 3);
+        boolean hasInputs = false;
+        for (int i = 0; i < craftingSlots.length; i++) {
+            ItemStack stack = craftingSlots[i].getStack();
+            tempCrafting.setInventorySlotContents(i, stack);
+            if (stack != null) {
+                hasInputs = true;
+                System.out.println("  Input[" + i + "]: " + stack.getDisplayName() + " (x" + stack.stackSize + ")");
+            }
+        }
+
+        if (hasInputs) {
+            ItemStack recipeResult = CraftingManager.getInstance().findMatchingRecipe(tempCrafting, getWorld());
+            System.out.println("  Recipe Result: " + (recipeResult != null ?
+                    recipeResult.getDisplayName() + " (x" + recipeResult.stackSize + ")" : "null"));
+        } else {
+            System.out.println("  No inputs in crafting matrix");
+        }
+
+        System.out.println("=== END CRAFTING OUTPUT DEBUG ===");
     }
 }
