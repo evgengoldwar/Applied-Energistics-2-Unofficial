@@ -3,6 +3,9 @@ package appeng.container.implementations;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.container.slot.SlotPatternTerm;
+import appeng.tile.inventory.IAEAppEngInventory;
+import appeng.tile.inventory.InvOperation;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
@@ -29,7 +32,7 @@ import appeng.tile.inventory.BiggerAppEngInventory;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 
-public class ContainerEditorPattern extends AEBaseContainer implements IOptionalSlotHost {
+public class ContainerEditorPattern extends AEBaseContainer implements IOptionalSlotHost, IAEAppEngInventory {
 
     private static final int VANILLA_Y_OFFSET = 167;
     private static final int VANILLA_SLOT_SIZE = 18;
@@ -41,6 +44,9 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private static final int PATTERN_SLOTS_OFFSET_X_SMALL = 147;
     private static final int INPUT_SLOTS_OFFSET_Y_SMALL = 93;
     private static final int INPUT_SLOTS_OFFSET_X_SMALL = 18;
+    private static final int INPUT_SLOTS = 9;
+    private static final int OUTPUT_SLOTS = 3;
+
 
     private final Slot patternValue;
     private ICraftingPatternDetails patternDetails;
@@ -55,8 +61,6 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
     private final AppEngInternalInventory cOut = new AppEngInternalInventory(null, 1);
 
-    private static final int INPUT_SLOTS = 9;
-    private static final int OUTPUT_SLOTS = 3;
 
     @GuiSync(97)
     public boolean craftingMode = true;
@@ -80,9 +84,16 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     public ContainerEditorPattern(final InventoryPlayer ip, final PartInterfaceTerminal te) {
         super(ip, te);
 
-        final AppEngInternalInventory craftingOutput = new BiggerAppEngInventory(null, 1) {};
-        final AppEngInternalInventory processingOutput = new BiggerAppEngInventory(null, 3) {};
-        this.crafting = new BiggerAppEngInventory(null, 9) {};
+        final AppEngInternalInventory crafting = new BiggerAppEngInventory(this, 9) {};
+
+        final AppEngInternalInventory processingOutput = new BiggerAppEngInventory(this, 3) {};
+
+        final AppEngInternalInventory patternInv = new AppEngInternalInventory(this, 2);
+
+        final AppEngInternalInventory craftingOutput = new BiggerAppEngInventory(this, 1) {};
+
+        this.crafting = crafting;
+
 
         for (int y = 0; y < 3; y++) {
             for (int x = 0; x < 3; x++) {
@@ -112,7 +123,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
             }
         }
 
-        this.craftingOutputSlot = new SlotPatternOutputs(
+        this.craftingOutputSlot = new OptionalSlotFake(
                 craftingOutput,
                 this,
                 0,
@@ -120,31 +131,12 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                 OUTPUT_SLOTS_OFFSET_Y_SMALL,
                 0,
                 0,
-                1) {
-            @Override
-            public boolean canTakeStack(EntityPlayer player) {
-                return false;
-            }
-
-            @Override
-            public boolean isItemValid(ItemStack stack) {
-                return false;
-            }
-
-            @Override
-            public void putStack(ItemStack stack) {
-                if (stack != null && craftingMode) {
-                    stack = stack.copy();
-                    stack.stackSize = 1;
-                }
-                super.putStack(stack);
-            }
-        };
+                1);
         this.addSlotToContainer(this.craftingOutputSlot);
         this.outputSlots.add(this.craftingOutputSlot);
 
         for (int y = 0; y < 3; y++) {
-            OptionalSlotFake processingSlot = new SlotPatternOutputs(
+            OptionalSlotFake processingSlot = new OptionalSlotFake(
                     processingOutput,
                     this,
                     y,
@@ -152,28 +144,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                     OUTPUT_SLOTS_OFFSET_Y_SMALL + y * VANILLA_SLOT_SIZE,
                     0,
                     0,
-                    1) {
-                @Override
-                public boolean canTakeStack(EntityPlayer player) {
-                    return true;
-                }
-
-                @Override
-                public boolean isItemValid(ItemStack stack) {
-                    return true;
-                }
-
-                @Override
-                public void putStack(ItemStack stack) {
-                    if (stack != null && !craftingMode) {
-                        stack = stack.copy();
-                        if (stack.stackSize <= 0) {
-                            stack.stackSize = 1;
-                        }
-                    }
-                    super.putStack(stack);
-                }
-            };
+                    1);
             this.processingOutputSlots[y] = processingSlot;
             this.addSlotToContainer(processingSlot);
             this.outputSlots.add(processingSlot);
@@ -188,7 +159,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
         for (int y = 0; y < 3; y++) {
             for (int x = 0; x < 3; x++) {
-                ProcessingInputSlot inputSlot = new ProcessingInputSlot(
+                SlotFake inputSlot = new SlotFake(
                         new AppEngInternalInventory(null, INPUT_SLOTS),
                         x + y * 3,
                         INPUT_SLOTS_OFFSET_X_SMALL + x * 18,
@@ -202,39 +173,20 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         updateSlotsVisibility();
     }
 
-    private class ProcessingInputSlot extends SlotFake {
-        public ProcessingInputSlot(IInventory inv, int idx, int x, int y) {
-            super(inv, idx, x, y);
+    @Override
+    public void saveChanges() {
+        this.detectAndSendChanges();
+    }
+
+    @Override
+    public void onChangeInventory(IInventory inv, int slot, InvOperation mc, ItemStack removed, ItemStack added) {
+        // Обрабатываем изменения в конкретных инвентарях
+        if (inv == this.crafting && craftingMode) {
+            getAndUpdateOutput();
         }
 
-        @Override
-        public boolean isItemValid(ItemStack stack) {
-            if (stack != null && !craftingMode) {
-                if (stack.stackSize <= 0) {
-                    stack.stackSize = 1;
-                }
-            }
-            return super.isItemValid(stack);
-        }
-
-        @Override
-        public void putStack(ItemStack stack) {
-            if (stack != null && !craftingMode) {
-                stack = stack.copy();
-                if (stack.stackSize <= 0) {
-                    stack.stackSize = 1;
-                }
-            } else if (stack != null && craftingMode) {
-                stack = stack.copy();
-                stack.stackSize = 1;
-            }
-            super.putStack(stack);
-        }
-
-        @Override
-        public int getSlotStackLimit() {
-            return !craftingMode ? 64 : 1;
-        }
+        // Синхронизируем изменения
+        this.detectAndSendChanges();
     }
 
     public void setSourceData(ContainerInterfaceTerminal sourceContainer, long sourceEntryId, int sourceSlot) {
@@ -753,6 +705,10 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         } else {
             return false;
         }
+    }
+
+    public int getIdxForSlotEnabled() {
+        return this.craftingMode ? 2 : 1;
     }
 
     public void doubleStacks(int val) {
