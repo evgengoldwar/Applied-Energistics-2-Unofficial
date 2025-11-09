@@ -186,11 +186,20 @@ public class PacketValueConfig extends AppEngPacket {
         } else if (this.Name.startsWith("PatternEditor.")) {
             if (c instanceof final ContainerEditorPattern cep) {
                 switch (this.Name) {
-                    case "PatternEditor.CraftMode" -> cep.setCraftingMode(this.Value.equals("1"));
+                    case "PatternEditor.CraftMode" -> {
+                        boolean newMode = Boolean.parseBoolean(this.Value);
+                        cep.setCraftingMode(newMode);
+                    }
                     case "PatternEditor.Encode" -> cep.encodePattern();
                     case "PatternEditor.Clear" -> cep.clear();
-                    case "PatternEditor.Substitute" -> cep.setSubstitute(this.Value.equals("1"));
-                    case "PatternEditor.BeSubstitute" -> cep.setBeSubstitute(this.Value.equals("1"));
+                    case "PatternEditor.Substitute" -> {
+                        boolean newSubstitute = Boolean.parseBoolean(this.Value);
+                        cep.setSubstitute(newSubstitute);
+                    }
+                    case "PatternEditor.BeSubstitute" -> {
+                        boolean newBeSubstitute = Boolean.parseBoolean(this.Value);
+                        cep.setBeSubstitute(newBeSubstitute);
+                    }
                     case "PatternEditor.Double" -> cep.doubleStacks(Integer.parseInt(this.Value));
                 }
             }

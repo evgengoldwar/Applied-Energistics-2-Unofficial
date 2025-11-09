@@ -6,8 +6,10 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
@@ -24,6 +26,7 @@ import appeng.container.slot.SlotPatternOutputs;
 import appeng.parts.reporting.PartInterfaceTerminal;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.tile.inventory.BiggerAppEngInventory;
+import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 
 public class ContainerEditorPattern extends AEBaseContainer implements IOptionalSlotHost {
@@ -46,12 +49,15 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private ItemStack originalPatternStack;
     private final IInventory crafting;
     private final SlotFakeCraftingMatrix[] craftingSlots = new SlotFakeCraftingMatrix[9];
-    private final OptionalSlotFake[] outputSlotsArray = new OptionalSlotFake[3];
+
+    private final OptionalSlotFake craftingOutputSlot;
+    private final OptionalSlotFake[] processingOutputSlots = new OptionalSlotFake[3];
+
     private final AppEngInternalInventory cOut = new AppEngInternalInventory(null, 1);
 
     private static final int INPUT_SLOTS = 9;
     private static final int OUTPUT_SLOTS = 3;
-    private static final int OUTPUT_SLOTS_CRAFTING_MODE = 1;
+
     @GuiSync(97)
     public boolean craftingMode = true;
 
@@ -65,13 +71,19 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private long sourceEntryId = -1;
     private int sourceSlot = -1;
 
+    // Временное хранилище для данных при переключении режимов
+    private ItemStack[] savedCraftingInputs = new ItemStack[9];
+    private ItemStack[] savedCraftingOutputs = new ItemStack[1];
+    private ItemStack[] savedProcessingInputs = new ItemStack[9];
+    private ItemStack[] savedProcessingOutputs = new ItemStack[3];
+
     public ContainerEditorPattern(final InventoryPlayer ip, final PartInterfaceTerminal te) {
         super(ip, te);
 
-        final AppEngInternalInventory output = new BiggerAppEngInventory(null, 3) {};
+        final AppEngInternalInventory craftingOutput = new BiggerAppEngInventory(null, 1) {};
+        final AppEngInternalInventory processingOutput = new BiggerAppEngInventory(null, 3) {};
         this.crafting = new BiggerAppEngInventory(null, 9) {};
 
-        // Создаем слоты для крафтовой сетки 3x3
         for (int y = 0; y < 3; y++) {
             for (int x = 0; x < 3; x++) {
                 this.addSlotToContainer(
@@ -79,27 +91,94 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                                 this.crafting,
                                 x + y * 3,
                                 CRAFTING_SLOTS_OFFSET_X + x * VANILLA_SLOT_SIZE,
-                                CRAFTING_SLOTS_OFFSET_Y + y * VANILLA_SLOT_SIZE));
+                                CRAFTING_SLOTS_OFFSET_Y + y * VANILLA_SLOT_SIZE) {
+                            @Override
+                            public boolean isItemValid(ItemStack stack) {
+                                if (stack != null && craftingMode) {
+                                    stack.stackSize = 1;
+                                }
+                                return super.isItemValid(stack);
+                            }
+
+                            @Override
+                            public void putStack(ItemStack stack) {
+                                if (stack != null && craftingMode) {
+                                    stack = stack.copy();
+                                    stack.stackSize = 1;
+                                }
+                                super.putStack(stack);
+                            }
+                        });
             }
         }
 
-        // Создаем слоты для выходов
+        this.craftingOutputSlot = new SlotPatternOutputs(
+                craftingOutput,
+                this,
+                0,
+                OUTPUT_SLOTS_OFFSET_X_SMALL,
+                OUTPUT_SLOTS_OFFSET_Y_SMALL,
+                0,
+                0,
+                1) {
+            @Override
+            public boolean canTakeStack(EntityPlayer player) {
+                return false;
+            }
+
+            @Override
+            public boolean isItemValid(ItemStack stack) {
+                return false;
+            }
+
+            @Override
+            public void putStack(ItemStack stack) {
+                if (stack != null && craftingMode) {
+                    stack = stack.copy();
+                    stack.stackSize = 1;
+                }
+                super.putStack(stack);
+            }
+        };
+        this.addSlotToContainer(this.craftingOutputSlot);
+        this.outputSlots.add(this.craftingOutputSlot);
+
         for (int y = 0; y < 3; y++) {
-            this.addSlotToContainer(
-                    this.outputSlotsArray[y] = new SlotPatternOutputs(
-                            output,
-                            this,
-                            y,
-                            OUTPUT_SLOTS_OFFSET_X_SMALL,
-                            OUTPUT_SLOTS_OFFSET_Y_SMALL + y * VANILLA_SLOT_SIZE,
-                            0,
-                            0,
-                            1));
-            this.outputSlotsArray[y].setRenderDisabled(false);
-            this.outputSlots.add(this.outputSlotsArray[y]);
+            OptionalSlotFake processingSlot = new SlotPatternOutputs(
+                    processingOutput,
+                    this,
+                    y,
+                    OUTPUT_SLOTS_OFFSET_X_SMALL,
+                    OUTPUT_SLOTS_OFFSET_Y_SMALL + y * VANILLA_SLOT_SIZE,
+                    0,
+                    0,
+                    1) {
+                @Override
+                public boolean canTakeStack(EntityPlayer player) {
+                    return true;
+                }
+
+                @Override
+                public boolean isItemValid(ItemStack stack) {
+                    return true;
+                }
+
+                @Override
+                public void putStack(ItemStack stack) {
+                    if (stack != null && !craftingMode) {
+                        stack = stack.copy();
+                        if (stack.stackSize <= 0) {
+                            stack.stackSize = 1;
+                        }
+                    }
+                    super.putStack(stack);
+                }
+            };
+            this.processingOutputSlots[y] = processingSlot;
+            this.addSlotToContainer(processingSlot);
+            this.outputSlots.add(processingSlot);
         }
 
-        // Слот для отображения паттерна
         patternValue = new SlotInaccessible(
                 new AppEngInternalInventory(null, 1),
                 0,
@@ -107,29 +186,61 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                 PATTERN_SLOTS_OFFSET_Y_SMALL);
         this.addSlotToContainer(patternValue);
 
-        // Создаем inputSlots для совместимости
         for (int y = 0; y < 3; y++) {
             for (int x = 0; x < 3; x++) {
-                SlotFake inputSlot = new SlotFake(
+                ProcessingInputSlot inputSlot = new ProcessingInputSlot(
                         new AppEngInternalInventory(null, INPUT_SLOTS),
                         x + y * 3,
                         INPUT_SLOTS_OFFSET_X_SMALL + x * 18,
                         INPUT_SLOTS_OFFSET_Y_SMALL + y * 18);
+                this.addSlotToContainer(inputSlot);
                 inputSlots.add(inputSlot);
             }
         }
 
         this.bindPlayerInventory(ip, 0, VANILLA_Y_OFFSET);
-        updateOutputSlotsVisibility();
+        updateSlotsVisibility();
     }
 
-    // Добавьте методы для установки исходного входа и слота
+    private class ProcessingInputSlot extends SlotFake {
+        public ProcessingInputSlot(IInventory inv, int idx, int x, int y) {
+            super(inv, idx, x, y);
+        }
+
+        @Override
+        public boolean isItemValid(ItemStack stack) {
+            if (stack != null && !craftingMode) {
+                if (stack.stackSize <= 0) {
+                    stack.stackSize = 1;
+                }
+            }
+            return super.isItemValid(stack);
+        }
+
+        @Override
+        public void putStack(ItemStack stack) {
+            if (stack != null && !craftingMode) {
+                stack = stack.copy();
+                if (stack.stackSize <= 0) {
+                    stack.stackSize = 1;
+                }
+            } else if (stack != null && craftingMode) {
+                stack = stack.copy();
+                stack.stackSize = 1;
+            }
+            super.putStack(stack);
+        }
+
+        @Override
+        public int getSlotStackLimit() {
+            return !craftingMode ? 64 : 1;
+        }
+    }
+
     public void setSourceData(ContainerInterfaceTerminal sourceContainer, long sourceEntryId, int sourceSlot) {
         this.sourceContainer = sourceContainer;
         this.sourceEntryId = sourceEntryId;
         this.sourceSlot = sourceSlot;
-        System.out.println(
-                "Source data set: container=" + sourceContainer + ", entry=" + sourceEntryId + ", slot=" + sourceSlot);
     }
 
     public World getWorld() {
@@ -145,11 +256,9 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         this.originalPatternStack = patternStack;
 
         if (details != null) {
-            this.craftingMode = details.isCraftable();
-
-            // Читаем настройки из NBT паттерна
             if (patternStack.hasTagCompound()) {
                 NBTTagCompound tag = patternStack.getTagCompound();
+                this.craftingMode = tag.getBoolean("crafting");
                 this.substitute = tag.getBoolean("substitute");
                 this.beSubstitute = tag.getBoolean("beSubstitute");
             }
@@ -161,94 +270,130 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private void initializeSlots() {
         if (patternDetails == null) return;
 
-        // Очищаем все слоты
         clearSlots();
 
-        // Заполняем входные слоты
         appeng.api.storage.data.IAEStack[] inputs = patternDetails.getInputs();
-        for (int i = 0; i < Math.min(inputs.length, INPUT_SLOTS); i++) {
-            if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack aeStack) {
-                ItemStack stack = aeStack.getItemStack();
-                if (stack != null) {
-                    craftingSlots[i].putStack(stack.copy());
+
+        if (craftingMode) {
+            for (int i = 0; i < Math.min(inputs.length, INPUT_SLOTS); i++) {
+                if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
+                    appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) inputs[i];
+                    ItemStack stack = aeStack.getItemStack();
+                    if (stack != null) {
+                        stack = stack.copy();
+                        stack.stackSize = 1;
+                        craftingSlots[i].putStack(stack);
+                    }
+                }
+            }
+
+            getAndUpdateOutput();
+        } else {
+            for (int i = 0; i < Math.min(inputs.length, INPUT_SLOTS); i++) {
+                if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
+                    appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) inputs[i];
+                    ItemStack stack = aeStack.getItemStack();
+                    if (stack != null) {
+                        ItemStack copy = stack.copy();
+                        if (copy.stackSize <= 0) {
+                            copy.stackSize = 1;
+                        }
+                        inputSlots.get(i).putStack(copy);
+                    }
+                }
+            }
+
+            appeng.api.storage.data.IAEStack[] outputs = patternDetails.getOutputs();
+            for (int i = 0; i < Math.min(outputs.length, OUTPUT_SLOTS); i++) {
+                if (outputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
+                    appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) outputs[i];
+                    ItemStack stack = aeStack.getItemStack();
+                    if (stack != null) {
+                        ItemStack copy = stack.copy();
+                        if (copy.stackSize <= 0) {
+                            copy.stackSize = 1;
+                        }
+                        processingOutputSlots[i].putStack(copy);
+                    }
                 }
             }
         }
 
-        // Заполняем выходные слоты
-        appeng.api.storage.data.IAEStack[] outputs = patternDetails.getOutputs();
-        for (int i = 0; i < Math.min(outputs.length, OUTPUT_SLOTS); i++) {
-            if (outputs[i] instanceof appeng.api.storage.data.IAEItemStack aeStack) {
-                ItemStack stack = aeStack.getItemStack();
-                if (stack != null) {
-                    outputSlotsArray[i].putStack(stack.copy());
-                }
-            }
-        }
-
-        // Устанавливаем сам паттерн в слот
         if (originalPatternStack != null) {
             patternValue.putStack(originalPatternStack.copy());
         }
+
+        updateSlotsVisibility();
+        this.detectAndSendChanges();
     }
 
     public void clear() {
         for (Slot slot : craftingSlots) {
             slot.putStack(null);
         }
-        for (Slot slot : outputSlotsArray) {
+        for (Slot slot : processingOutputSlots) {
             slot.putStack(null);
+        }
+        for (Slot slot : inputSlots) {
+            slot.putStack(null);
+        }
+        cOut.setInventorySlotContents(0, null);
+        craftingOutputSlot.putStack(null);
+
+        if (craftingMode) {
+            getAndUpdateOutput();
         }
     }
 
     public void encodePattern() {
         if (originalPatternStack == null) {
-            System.out.println("Cannot encode: originalPatternStack is null");
             return;
         }
-
-        System.out.println("Encoding pattern...");
 
         ItemStack patternStack = originalPatternStack.copy();
         patternStack.stackSize = 1;
 
-        // Получаем входы и выходы из слотов
         final ItemStack[] in = getInputs();
         final ItemStack[] out = getOutputs();
 
-        // Проверяем что есть хотя бы один вход и выход
         if (in == null || out == null) {
-            System.out.println("Cannot encode: inputs or outputs are null");
             return;
         }
 
-        // Создаем NBT для паттерна
         final NBTTagCompound encodedValue = new NBTTagCompound();
         final NBTTagList tagIn = new NBTTagList();
         final NBTTagList tagOut = new NBTTagList();
 
-        // Записываем входы
         for (final ItemStack i : in) {
             if (craftingMode) {
-                tagIn.appendTag(createItemTag(i));
+                ItemStack copy = i != null ? i.copy() : null;
+                if (copy != null) {
+                    copy.stackSize = 1;
+                }
+                tagIn.appendTag(createItemTag(copy));
             } else {
                 if (i != null) {
-                    tagIn.appendTag(
-                            appeng.util.Platform.writeStackNBT(AEItemStack.create(i), new NBTTagCompound(), true));
+                    // Для процессинга используем AEItemStack с сохранением количества
+                    AEItemStack aeStack = AEItemStack.create(i);
+                    tagIn.appendTag(Platform.writeStackNBT(aeStack, new NBTTagCompound(), true));
                 } else {
                     tagIn.appendTag(new NBTTagCompound());
                 }
             }
         }
 
-        // Записываем выходы
         for (final ItemStack i : out) {
             if (craftingMode) {
-                tagOut.appendTag(createItemTag(i));
+                ItemStack copy = i != null ? i.copy() : null;
+                if (copy != null) {
+                    copy.stackSize = 1;
+                }
+                tagOut.appendTag(createItemTag(copy));
             } else {
                 if (i != null) {
-                    tagOut.appendTag(
-                            appeng.util.Platform.writeStackNBT(AEItemStack.create(i), new NBTTagCompound(), true));
+                    // Для процессинга используем AEItemStack с сохранением количества
+                    AEItemStack aeStack = AEItemStack.create(i);
+                    tagOut.appendTag(Platform.writeStackNBT(aeStack, new NBTTagCompound(), true));
                 } else {
                     tagOut.appendTag(new NBTTagCompound());
                 }
@@ -261,7 +406,6 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         encodedValue.setBoolean("substitute", this.substitute);
         encodedValue.setBoolean("beSubstitute", this.beSubstitute);
 
-        // Сохраняем оригинального автора если был
         if (originalPatternStack.hasTagCompound() && originalPatternStack.getTagCompound().hasKey("author")) {
             encodedValue.setString("author", originalPatternStack.getTagCompound().getString("author"));
         } else {
@@ -269,107 +413,139 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         }
 
         patternStack.setTagCompound(encodedValue);
-
-        // Обновляем локальную копию
         this.originalPatternStack = patternStack;
         this.patternValue.putStack(patternStack);
 
-        System.out.println("Pattern encoded locally, updating source terminal...");
-
-        // Сохраняем обратно в терминал
         updateSourceTerminal(patternStack);
-    }
-
-    // Метод для обновления исходного терминала
-    private void updateSourceTerminal(ItemStack updatedPattern) {
-        if (sourceEntryId >= 0 && sourceSlot >= 0 && sourceContainer != null) {
-            try {
-                System.out.println("Updating source terminal: entry=" + sourceEntryId + ", slot=" + sourceSlot);
-
-                // Вызываем метод обновления в контейнере интерфейс терминала
-                sourceContainer.updatePattern(sourceEntryId, sourceSlot, updatedPattern);
-
-                System.out.println("Pattern updated in interface terminal successfully");
-
-            } catch (final Exception e) {
-                System.out.println("Error updating source terminal: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println(
-                    "Cannot update source terminal: invalid source data (entry=" + sourceEntryId
-                            + ", slot="
-                            + sourceSlot
-                            + ", container="
-                            + sourceContainer
-                            + ")");
-        }
-    }
-
-    private ItemStack[] getInputs() {
-        final ItemStack[] input = new ItemStack[9];
-        boolean hasValue = false;
-
-        for (int x = 0; x < this.craftingSlots.length; x++) {
-            input[x] = this.craftingSlots[x].getStack();
-            if (input[x] != null) {
-                hasValue = true;
-            }
-        }
-
-        if (hasValue) {
-            return input;
-        }
-
-        return null;
-    }
-
-    private ItemStack[] getOutputs() {
-        if (this.craftingMode) {
-            // Для крафтового режима - только первый выход
-            final ItemStack out = this.outputSlotsArray[0].getStack();
-            if (out != null && out.stackSize > 0) {
-                return new ItemStack[] { out };
-            }
-        } else {
-            // Для processing режима - все выходы
-            final List<ItemStack> list = new ArrayList<>(3);
-            boolean hasValue = false;
-
-            for (final OptionalSlotFake outputSlot : this.outputSlotsArray) {
-                final ItemStack out = outputSlot.getStack();
-                if (out != null && out.stackSize > 0) {
-                    list.add(out);
-                    hasValue = true;
-                }
-            }
-
-            if (hasValue) {
-                return list.toArray(new ItemStack[0]);
-            }
-        }
-
-        return null;
     }
 
     private NBTTagCompound createItemTag(final ItemStack i) {
         final NBTTagCompound c = new NBTTagCompound();
 
-        if (i != null) {
+        if (i != null && i.getItem() != null) {
             i.writeToNBT(c);
-            c.setInteger("Count", i.stackSize);
         }
 
         return c;
+    }
+
+    private void updateSourceTerminal(ItemStack updatedPattern) {
+        if (sourceEntryId >= 0 && sourceSlot >= 0 && sourceContainer != null) {
+            try {
+                sourceContainer.updatePattern(sourceEntryId, sourceSlot, updatedPattern);
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private ItemStack getAndUpdateOutput() {
+        if (!craftingMode) return null;
+
+        final InventoryCrafting ic = new InventoryCrafting(new DummyContainer(), 3, 3);
+
+        for (int x = 0; x < ic.getSizeInventory(); x++) {
+            ItemStack stack = this.crafting.getStackInSlot(x);
+            if (stack != null && stack.stackSize != 1) {
+                stack = stack.copy();
+                stack.stackSize = 1;
+                this.crafting.setInventorySlotContents(x, stack);
+            }
+            ic.setInventorySlotContents(x, stack);
+        }
+
+        final ItemStack is = CraftingManager.getInstance().findMatchingRecipe(ic, this.getPlayerInv().player.worldObj);
+        this.cOut.setInventorySlotContents(0, is);
+        craftingOutputSlot.putStack(is);
+
+        return is;
+    }
+
+    private ItemStack[] getInputs() {
+        if (craftingMode) {
+            final ItemStack[] input = new ItemStack[9];
+            boolean hasValue = false;
+
+            for (int x = 0; x < this.craftingSlots.length; x++) {
+                input[x] = this.craftingSlots[x].getStack();
+                if (input[x] != null) {
+                    hasValue = true;
+                    if (input[x].stackSize != 1) {
+                        input[x] = input[x].copy();
+                        input[x].stackSize = 1;
+                    }
+                }
+            }
+
+            return hasValue ? input : null;
+        } else {
+            final ItemStack[] input = new ItemStack[9];
+            boolean hasValue = false;
+
+            for (int x = 0; x < this.inputSlots.size(); x++) {
+                ItemStack stack = this.inputSlots.get(x).getStack();
+                if (stack != null) {
+                    hasValue = true;
+                    input[x] = stack.copy();
+                    if (input[x].stackSize <= 0) {
+                        input[x].stackSize = 1;
+                    }
+                }
+            }
+
+            return hasValue ? input : null;
+        }
+    }
+
+    private ItemStack[] getOutputs() {
+        if (this.craftingMode) {
+            final ItemStack out = this.cOut.getStackInSlot(0);
+            if (out != null && out.stackSize > 0) {
+                ItemStack result = out.copy();
+                result.stackSize = 1;
+                return new ItemStack[] { result };
+            }
+
+            final ItemStack slotOut = this.craftingOutputSlot.getStack();
+            if (slotOut != null && slotOut.stackSize > 0) {
+                ItemStack result = slotOut.copy();
+                result.stackSize = 1;
+                return new ItemStack[] { result };
+            }
+
+            return null;
+        } else {
+            final List<ItemStack> list = new ArrayList<>(3);
+            boolean hasValue = false;
+
+            for (final OptionalSlotFake outputSlot : this.processingOutputSlots) {
+                final ItemStack out = outputSlot.getStack();
+                if (out != null && out.stackSize > 0) {
+                    ItemStack copy = out.copy();
+                    if (copy.stackSize <= 0) {
+                        copy.stackSize = 1;
+                    }
+                    list.add(copy);
+                    hasValue = true;
+                }
+            }
+
+            return hasValue ? list.toArray(new ItemStack[0]) : null;
+        }
     }
 
     private void clearSlots() {
         for (Slot slot : craftingSlots) {
             slot.putStack(null);
         }
-        for (Slot slot : outputSlotsArray) {
+        for (Slot slot : processingOutputSlots) {
             slot.putStack(null);
         }
+        for (Slot slot : inputSlots) {
+            slot.putStack(null);
+        }
+        cOut.setInventorySlotContents(0, null);
+        craftingOutputSlot.putStack(null);
     }
 
     public List<SlotFake> getInputSlots() {
@@ -389,9 +565,85 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     }
 
     public void setCraftingMode(boolean craftingMode) {
-        this.craftingMode = craftingMode;
-        updateOutputSlotsVisibility();
-        this.detectAndSendChanges();
+        if (this.craftingMode != craftingMode) {
+            // Сохраняем текущие данные перед изменением режима
+            saveCurrentSlotsData();
+
+            this.craftingMode = craftingMode;
+
+            // Восстанавливаем данные из временного хранилища
+            restoreSlotsData();
+            updateSlotsVisibility();
+
+            if (craftingMode) {
+                getAndUpdateOutput();
+            }
+
+            this.detectAndSendChanges();
+        }
+    }
+
+    private void saveCurrentSlotsData() {
+        if (this.craftingMode) {
+            // Сохраняем данные крафтинга
+            for (int i = 0; i < craftingSlots.length; i++) {
+                ItemStack stack = craftingSlots[i].getStack();
+                savedCraftingInputs[i] = stack != null ? stack.copy() : null;
+            }
+            ItemStack output = craftingOutputSlot.getStack();
+            savedCraftingOutputs[0] = output != null ? output.copy() : null;
+        } else {
+            // Сохраняем данные процессинга
+            for (int i = 0; i < inputSlots.size(); i++) {
+                ItemStack stack = inputSlots.get(i).getStack();
+                savedProcessingInputs[i] = stack != null ? stack.copy() : null;
+            }
+            for (int i = 0; i < processingOutputSlots.length; i++) {
+                ItemStack stack = processingOutputSlots[i].getStack();
+                savedProcessingOutputs[i] = stack != null ? stack.copy() : null;
+            }
+        }
+    }
+
+    private void restoreSlotsData() {
+        clearSlots();
+
+        if (this.craftingMode) {
+            // Восстанавливаем данные крафтинга
+            for (int i = 0; i < Math.min(savedCraftingInputs.length, craftingSlots.length); i++) {
+                if (savedCraftingInputs[i] != null) {
+                    ItemStack stack = savedCraftingInputs[i].copy();
+                    stack.stackSize = 1; // В режиме крафтинга всегда размер стека = 1
+                    craftingSlots[i].putStack(stack);
+                }
+            }
+            if (savedCraftingOutputs[0] != null) {
+                ItemStack stack = savedCraftingOutputs[0].copy();
+                stack.stackSize = 1;
+                craftingOutputSlot.putStack(stack);
+                cOut.setInventorySlotContents(0, stack);
+            }
+        } else {
+            // Восстанавливаем данные процессинга
+            for (int i = 0; i < Math.min(savedProcessingInputs.length, inputSlots.size()); i++) {
+                if (savedProcessingInputs[i] != null) {
+                    ItemStack stack = savedProcessingInputs[i].copy();
+                    if (stack.stackSize <= 0) {
+                        stack.stackSize = 1;
+                    }
+                    inputSlots.get(i).putStack(stack);
+                }
+            }
+            for (int i = 0; i < Math.min(savedProcessingOutputs.length, processingOutputSlots.length); i++) {
+                if (savedProcessingOutputs[i] != null) {
+                    ItemStack stack = savedProcessingOutputs[i].copy();
+                    if (stack.stackSize <= 0) {
+                        stack.stackSize = 1;
+                    }
+                    processingOutputSlots[i].putStack(stack);
+                }
+            }
+        }
     }
 
     public void setSubstitute(boolean substitute) {
@@ -402,16 +654,80 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         this.beSubstitute = beSubstitute;
     }
 
-    private void updateOutputSlotsVisibility() {
-        if (!this.craftingMode) {
-            // Processing mode - показываем все 3 слота
-            for (int i = 0; i < outputSlotsArray.length; i++) {
-                outputSlotsArray[i].setRenderDisabled(false);
+    @Override
+    public void onUpdate(String field, Object oldValue, Object newValue) {
+        super.onUpdate(field, oldValue, newValue);
+
+        if (field.equals("craftingMode")) {
+            updateSlotsVisibility();
+        }
+    }
+
+    @Override
+    public void onSlotChange(Slot slot) {
+        super.onSlotChange(slot);
+
+        if (craftingMode && isCraftingSlot(slot)) {
+            getAndUpdateOutput();
+        }
+    }
+
+    private boolean isCraftingSlot(Slot slot) {
+        for (SlotFakeCraftingMatrix craftingSlot : craftingSlots) {
+            if (slot == craftingSlot) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void updateSlotsVisibility() {
+        if (this.craftingMode) {
+            // Показываем слоты крафтинга, скрываем слоты процессинга
+            for (int i = 0; i < craftingSlots.length; i++) {
+                Slot slot = craftingSlots[i];
+                slot.xDisplayPosition = CRAFTING_SLOTS_OFFSET_X + (i % 3) * VANILLA_SLOT_SIZE;
+                slot.yDisplayPosition = CRAFTING_SLOTS_OFFSET_Y + (i / 3) * VANILLA_SLOT_SIZE;
+            }
+            for (Slot slot : inputSlots) {
+                slot.xDisplayPosition = -1000;
+                slot.yDisplayPosition = -1000;
             }
         } else {
-            // Crafting mode - показываем только первый слот
-            for (int i = 0; i < outputSlotsArray.length; i++) {
-                outputSlotsArray[i].setRenderDisabled(i != 0);
+            // Показываем слоты процессинга, скрываем слоты крафтинга
+            for (Slot slot : craftingSlots) {
+                slot.xDisplayPosition = -1000;
+                slot.yDisplayPosition = -1000;
+            }
+            for (int i = 0; i < inputSlots.size(); i++) {
+                Slot slot = inputSlots.get(i);
+                slot.xDisplayPosition = INPUT_SLOTS_OFFSET_X_SMALL + (i % 3) * VANILLA_SLOT_SIZE;
+                slot.yDisplayPosition = INPUT_SLOTS_OFFSET_Y_SMALL + (i / 3) * VANILLA_SLOT_SIZE;
+            }
+        }
+
+        updateOutputSlotsVisibility();
+        this.detectAndSendChanges();
+    }
+
+    private void updateOutputSlotsVisibility() {
+        if (this.craftingMode) {
+            // В режиме крафтинга показываем только один выходной слот
+            craftingOutputSlot.xDisplayPosition = OUTPUT_SLOTS_OFFSET_X_SMALL;
+            craftingOutputSlot.yDisplayPosition = OUTPUT_SLOTS_OFFSET_Y_SMALL;
+
+            for (int i = 0; i < processingOutputSlots.length; i++) {
+                processingOutputSlots[i].xDisplayPosition = -1000;
+                processingOutputSlots[i].yDisplayPosition = -1000;
+            }
+        } else {
+            // В режиме процессинга показываем три выходных слота
+            craftingOutputSlot.xDisplayPosition = -1000;
+            craftingOutputSlot.yDisplayPosition = -1000;
+
+            for (int i = 0; i < processingOutputSlots.length; i++) {
+                processingOutputSlots[i].xDisplayPosition = OUTPUT_SLOTS_OFFSET_X_SMALL;
+                processingOutputSlots[i].yDisplayPosition = OUTPUT_SLOTS_OFFSET_Y_SMALL + i * VANILLA_SLOT_SIZE;
             }
         }
     }
@@ -439,30 +755,53 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         }
     }
 
-    // Методы для умножения/деления стаков
     public void doubleStacks(int val) {
-        multiplyOrDivideStacks(
-                ((val & 1) != 0 ? ContainerPatternTerm.MULTIPLE_OF_BUTTON_CLICK_ON_SHIFT
-                        : ContainerPatternTerm.MULTIPLE_OF_BUTTON_CLICK) * ((val & 2) != 0 ? -1 : 1));
+        if (!isCraftingMode()) {
+            multiplyOrDivideStacks(
+                    ((val & 1) != 0 ? 64 : 2) * ((val & 2) != 0 ? -1 : 1));
+        }
     }
 
     public void multiplyOrDivideStacks(int multi) {
         if (!isCraftingMode()) {
-            if (ContainerPatternTerm.canMultiplyOrDivide(this.craftingSlots, multi)
-                    && ContainerPatternTerm.canMultiplyOrDivide(this.outputSlotsArray, multi)) {
-                ContainerPatternTerm.multiplyOrDivideStacksInternal(this.craftingSlots, multi);
-                ContainerPatternTerm.multiplyOrDivideStacksInternal(this.outputSlotsArray, multi);
+            for (SlotFake slot : inputSlots) {
+                if (slot.getHasStack() && slot.xDisplayPosition >= 0) {
+                    ItemStack stack = slot.getStack();
+                    if (multi > 0) {
+                        stack.stackSize = Math.min(64, stack.stackSize * multi);
+                    } else if (multi < 0) {
+                        stack.stackSize = Math.max(1, stack.stackSize / Math.abs(multi));
+                    }
+                }
             }
+
+            for (OptionalSlotFake slot : processingOutputSlots) {
+                if (slot.getHasStack() && slot.xDisplayPosition >= 0) {
+                    ItemStack stack = slot.getStack();
+                    if (multi > 0) {
+                        stack.stackSize = Math.min(64, stack.stackSize * multi);
+                    } else if (multi < 0) {
+                        stack.stackSize = Math.max(1, stack.stackSize / Math.abs(multi));
+                    }
+                }
+            }
+
             this.detectAndSendChanges();
         }
     }
 
     @Override
     public void onContainerClosed(final EntityPlayer player) {
-        // Автоматически сохраняем изменения при закрытии GUI
         if (originalPatternStack != null && sourceEntryId >= 0) {
-            encodePattern(); // Сохраняем текущее состояние
+            encodePattern();
         }
         super.onContainerClosed(player);
+    }
+
+    private static class DummyContainer extends net.minecraft.inventory.Container {
+        @Override
+        public boolean canInteractWith(EntityPlayer player) {
+            return false;
+        }
     }
 }

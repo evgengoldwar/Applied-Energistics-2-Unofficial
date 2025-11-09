@@ -29,12 +29,6 @@ public class GuiEditorPattern extends AEBaseGui {
     private static final int INVENTORY_STRING_Y_OFFSET = 100;
     private static final int PATTERN_STRING_Y_OFFSET = 182;
 
-    private static final String SUBSITUTION_DISABLE = "0";
-    private static final String SUBSITUTION_ENABLE = "1";
-
-    private static final String CRAFTMODE_CRAFTING = "1";
-    private static final String CRAFTMODE_PROCESSING = "0";
-
     private final ContainerEditorPattern container;
 
     private GuiTabButton tabCraftButton;
@@ -125,11 +119,14 @@ public class GuiEditorPattern extends AEBaseGui {
         super.actionPerformed(btn);
 
         try {
-            if (this.tabCraftButton == btn || this.tabProcessButton == btn) {
+            if (this.tabProcessButton == btn) {
+                // Switch to crafting mode
                 NetworkHandler.instance.sendToServer(
-                        new PacketValueConfig(
-                                "PatternEditor.CraftMode",
-                                this.tabProcessButton == btn ? CRAFTMODE_CRAFTING : CRAFTMODE_PROCESSING));
+                        new PacketValueConfig("PatternEditor.CraftMode", "true"));
+            } else if (this.tabCraftButton == btn) {
+                // Switch to processing mode
+                NetworkHandler.instance.sendToServer(
+                        new PacketValueConfig("PatternEditor.CraftMode", "false"));
             } else if (this.encodeBtn == btn) {
                 NetworkHandler.instance.sendToServer(new PacketValueConfig("PatternEditor.Encode", "1"));
             } else if (this.clearBtn == btn) {
@@ -138,17 +135,19 @@ public class GuiEditorPattern extends AEBaseGui {
                 NetworkHandler.instance.sendToServer(
                         new PacketValueConfig(
                                 "PatternEditor.Substitute",
-                                this.substitutionsEnabledBtn == btn ? SUBSITUTION_DISABLE : SUBSITUTION_ENABLE));
+                                this.substitutionsEnabledBtn == btn ? "true" : "false"));
             } else if (this.beSubstitutionsEnabledBtn == btn || this.beSubstitutionsDisabledBtn == btn) {
                 NetworkHandler.instance.sendToServer(
                         new PacketValueConfig(
                                 "PatternEditor.BeSubstitute",
-                                this.beSubstitutionsEnabledBtn == btn ? SUBSITUTION_DISABLE : SUBSITUTION_ENABLE));
+                                this.beSubstitutionsEnabledBtn == btn ? "true" : "false"));
             } else if (doubleBtn == btn) {
-                int val = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) ? 1 : 0;
-                if (Mouse.isButtonDown(1)) val |= 0b10;
-                NetworkHandler.instance
-                        .sendToServer(new PacketValueConfig("PatternEditor.Double", String.valueOf(val)));
+                if (!this.container.isCraftingMode()) {
+                    int val = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) ? 1 : 0;
+                    if (Mouse.isButtonDown(1)) val |= 0b10;
+                    NetworkHandler.instance
+                            .sendToServer(new PacketValueConfig("PatternEditor.Double", String.valueOf(val)));
+                }
             }
         } catch (final IOException e) {
             e.printStackTrace();
@@ -170,15 +169,15 @@ public class GuiEditorPattern extends AEBaseGui {
     }
 
     private void updateButtonVisibility() {
-        if (!this.container.isCraftingMode()) {
-            this.tabCraftButton.visible = false;
-            this.tabProcessButton.visible = true;
-            this.doubleBtn.visible = true;
-        } else {
-            this.tabCraftButton.visible = true;
-            this.tabProcessButton.visible = false;
-            this.doubleBtn.visible = false;
-        }
+        boolean isCraftingMode = this.container.isCraftingMode();
+
+        // Правильная логика отображения кнопок:
+        // Когда в режиме крафтинга, показываем кнопку процессинга для переключения
+        // Когда в режиме процессинга, показываем кнопку крафтинга для переключения
+        this.tabCraftButton.visible = isCraftingMode;
+        this.tabProcessButton.visible = !isCraftingMode;
+
+        this.doubleBtn.visible = !isCraftingMode;
 
         if (this.container.substitute) {
             this.substitutionsEnabledBtn.visible = true;
