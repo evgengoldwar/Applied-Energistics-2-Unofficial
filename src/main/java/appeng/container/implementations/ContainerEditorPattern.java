@@ -219,10 +219,14 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         clearSlots();
 
         appeng.api.storage.data.IAEStack[] inputs = patternDetails.getInputs();
+        appeng.api.storage.data.IAEStack[] outputs = patternDetails.getOutputs();
 
-        if (craftingMode) {
+        // ВАЖНО: Заполняем слоты в зависимости от текущего режима паттерна
+        boolean patternIsCrafting = this.craftingMode; // Используем текущий режим
+
+        if (patternIsCrafting) {
             // Заполняем слоты крафтинга
-            for (int i = 0; i < Math.min(inputs.length, INPUT_SLOTS); i++) {
+            for (int i = 0; i < Math.min(inputs.length, 9); i++) {
                 if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
                     appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) inputs[i];
                     ItemStack stack = aeStack.getItemStack();
@@ -233,10 +237,23 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                     }
                 }
             }
-            getAndUpdateOutput();
+
+            // Заполняем выход крафтинга
+            if (outputs != null && outputs.length > 0 && outputs[0] instanceof appeng.api.storage.data.IAEItemStack) {
+                appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) outputs[0];
+                ItemStack stack = aeStack.getItemStack();
+                if (stack != null) {
+                    ItemStack copy = stack.copy();
+                    copy.stackSize = 1;
+                    craftingOutputSlot.putStack(copy);
+                    cOut.setInventorySlotContents(0, copy);
+                }
+            } else {
+                getAndUpdateOutput(); // Обновляем вывод если нет сохраненного
+            }
         } else {
             // Заполняем слоты процессинга
-            for (int i = 0; i < Math.min(inputs.length, INPUT_SLOTS); i++) {
+            for (int i = 0; i < Math.min(inputs.length, 9); i++) {
                 if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
                     appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) inputs[i];
                     ItemStack stack = aeStack.getItemStack();
@@ -251,8 +268,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
             }
 
             // Заполняем выходные слоты процессинга
-            appeng.api.storage.data.IAEStack[] outputs = patternDetails.getOutputs();
-            for (int i = 0; i < Math.min(outputs.length, OUTPUT_SLOTS); i++) {
+            for (int i = 0; i < Math.min(outputs.length, 3); i++) {
                 if (outputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
                     appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) outputs[i];
                     ItemStack stack = aeStack.getItemStack();
@@ -298,6 +314,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
             return;
         }
 
+        debugPatternInfo();
+
         ItemStack patternStack = originalPatternStack.copy();
         patternStack.stackSize = 1;
 
@@ -305,6 +323,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         final ItemStack[] out = getOutputs();
 
         if (in == null || out == null) {
+            System.out.println("=== PATTERN ENCODING FAILED: Inputs or Outputs are null ===");
             return;
         }
 
@@ -314,15 +333,26 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
         for (final ItemStack i : in) {
             if (craftingMode) {
+                // КРАФТИНГ: обычный формат Minecraft
                 ItemStack copy = i != null ? i.copy() : null;
                 if (copy != null) {
                     copy.stackSize = 1;
                 }
                 tagIn.appendTag(createItemTag(copy));
             } else {
+                // ПРОЦЕССИНГ: формат AE2 с правильными полями
                 if (i != null) {
                     AEItemStack aeStack = AEItemStack.create(i);
-                    tagIn.appendTag(Platform.writeStackNBT(aeStack, new NBTTagCompound(), true));
+                    NBTTagCompound itemTag = Platform.writeStackNBT(aeStack, new NBTTagCompound(), true);
+
+                    // ВАЖНО: Убедимся, что Count установлен правильно
+                    if (itemTag.hasKey("Count")) {
+                        itemTag.setByte("Count", (byte) i.stackSize); // Устанавливаем реальное количество
+                    } else {
+                        itemTag.setByte("Count", (byte) i.stackSize);
+                    }
+
+                    tagIn.appendTag(itemTag);
                 } else {
                     tagIn.appendTag(new NBTTagCompound());
                 }
@@ -331,15 +361,26 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
         for (final ItemStack i : out) {
             if (craftingMode) {
+                // КРАФТИНГ: обычный формат Minecraft
                 ItemStack copy = i != null ? i.copy() : null;
                 if (copy != null) {
                     copy.stackSize = 1;
                 }
                 tagOut.appendTag(createItemTag(copy));
             } else {
+                // ПРОЦЕССИНГ: формат AE2 с правильными полями
                 if (i != null) {
                     AEItemStack aeStack = AEItemStack.create(i);
-                    tagOut.appendTag(Platform.writeStackNBT(aeStack, new NBTTagCompound(), true));
+                    NBTTagCompound itemTag = Platform.writeStackNBT(aeStack, new NBTTagCompound(), true);
+
+                    // ВАЖНО: Убедимся, что Count установлен правильно
+                    if (itemTag.hasKey("Count")) {
+                        itemTag.setByte("Count", (byte) i.stackSize); // Устанавливаем реальное количество
+                    } else {
+                        itemTag.setByte("Count", (byte) i.stackSize);
+                    }
+
+                    tagOut.appendTag(itemTag);
                 } else {
                     tagOut.appendTag(new NBTTagCompound());
                 }
@@ -352,6 +393,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         encodedValue.setBoolean("substitute", this.substitute);
         encodedValue.setBoolean("beSubstitute", this.beSubstitute);
 
+        debugEncodedNBT(encodedValue);
+
         if (originalPatternStack.hasTagCompound() && originalPatternStack.getTagCompound().hasKey("author")) {
             encodedValue.setString("author", originalPatternStack.getTagCompound().getString("author"));
         } else {
@@ -363,6 +406,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         this.patternValue.putStack(patternStack);
 
         updateSourceTerminal(patternStack);
+
     }
 
     private NBTTagCompound createItemTag(final ItemStack i) {
@@ -447,24 +491,23 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
     private ItemStack[] getOutputs() {
         if (this.craftingMode) {
-            // Используем ТОЛЬКО craftingOutputSlot для крафтинга
-            final ItemStack out = this.cOut.getStackInSlot(0);
-            if (out != null && out.stackSize > 0) {
-                ItemStack result = out.copy();
+            // Для крафтинга используем оба возможных источника вывода
+            ItemStack result = null;
+
+            // Сначала проверяем cOut инвентарь
+            if (this.cOut.getStackInSlot(0) != null) {
+                result = this.cOut.getStackInSlot(0).copy();
                 result.stackSize = 1;
-                return new ItemStack[] { result };
+            }
+            // Затем проверяем craftingOutputSlot
+            else if (this.craftingOutputSlot.getStack() != null) {
+                result = this.craftingOutputSlot.getStack().copy();
+                result.stackSize = 1;
             }
 
-            final ItemStack slotOut = this.craftingOutputSlot.getStack();
-            if (slotOut != null && slotOut.stackSize > 0) {
-                ItemStack result = slotOut.copy();
-                result.stackSize = 1;
-                return new ItemStack[] { result };
-            }
-
-            return null;
+            return result != null ? new ItemStack[] { result } : null;
         } else {
-            // Используем ТОЛЬКО processingOutputSlots для процессинга
+            // Для процессинга используем processingOutputSlots
             final List<ItemStack> list = new ArrayList<>(3);
             boolean hasValue = false;
 
@@ -753,5 +796,242 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         public boolean canInteractWith(EntityPlayer player) {
             return false;
         }
+    }
+
+    private void debugPatternInfo() {
+        System.out.println(" ");
+        System.out.println("=== DEBUG PATTERN INFO ===");
+
+        // Информация о контейнере
+        System.out.println("Container Info:");
+        System.out.println("  Class: " + this.getClass().getName());
+        System.out.println("  Crafting Mode: " + this.craftingMode);
+        System.out.println("  Substitute: " + this.substitute);
+        System.out.println("  Be Substitute: " + this.beSubstitute);
+        System.out.println("  Source Entry ID: " + this.sourceEntryId);
+        System.out.println("  Source Slot: " + this.sourceSlot);
+        System.out.println("  Source Container: " + (this.sourceContainer != null ? "present" : "null"));
+
+        // Информация о оригинальном паттерне
+        System.out.println("Original Pattern Stack:");
+        if (this.originalPatternStack != null) {
+            System.out.println("  Item: " + this.originalPatternStack.getItem());
+            System.out.println("  Display Name: " + this.originalPatternStack.getDisplayName());
+            System.out.println("  Stack Size: " + this.originalPatternStack.stackSize);
+            System.out.println("  Has NBT: " + this.originalPatternStack.hasTagCompound());
+
+            if (this.originalPatternStack.hasTagCompound()) {
+                debugNBTData("Original Pattern NBT", this.originalPatternStack.getTagCompound());
+            }
+        } else {
+            System.out.println("  null");
+        }
+
+        // Информация о pattern details
+        System.out.println("Pattern Details:");
+        if (this.patternDetails != null) {
+            System.out.println("  Class: " + this.patternDetails.getClass().getName());
+
+            // Inputs
+            appeng.api.storage.data.IAEStack[] inputs = this.patternDetails.getInputs();
+            System.out.println("  Inputs (" + (inputs != null ? inputs.length : 0) + "):");
+            if (inputs != null) {
+                for (int i = 0; i < inputs.length; i++) {
+                    if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
+                        appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) inputs[i];
+                        ItemStack stack = aeStack != null ? aeStack.getItemStack() : null;
+                        System.out.println("    [" + i + "]: " + (stack != null ?
+                                stack.getDisplayName() + " (x" + stack.stackSize + ")" : "null"));
+                    } else {
+                        System.out.println("    [" + i + "]: " + (inputs[i] != null ? inputs[i].toString() : "null"));
+                    }
+                }
+            }
+
+            // Outputs
+            appeng.api.storage.data.IAEStack[] outputs = this.patternDetails.getOutputs();
+            System.out.println("  Outputs (" + (outputs != null ? outputs.length : 0) + "):");
+            if (outputs != null) {
+                for (int i = 0; i < outputs.length; i++) {
+                    if (outputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
+                        appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) outputs[i];
+                        ItemStack stack = aeStack != null ? aeStack.getItemStack() : null;
+                        System.out.println("    [" + i + "]: " + (stack != null ?
+                                stack.getDisplayName() + " (x" + stack.stackSize + ")" : "null"));
+                    } else {
+                        System.out.println("    [" + i + "]: " + (outputs[i] != null ? outputs[i].toString() : "null"));
+                    }
+                }
+            }
+        } else {
+            System.out.println("  null");
+        }
+
+        // Текущие входные данные
+        ItemStack[] currentInputs = getInputs();
+        System.out.println("Current Inputs (" + (currentInputs != null ? currentInputs.length : 0) + "):");
+        if (currentInputs != null) {
+            for (int i = 0; i < currentInputs.length; i++) {
+                ItemStack stack = currentInputs[i];
+                System.out.println("  [" + i + "]: " + (stack != null ?
+                        stack.getDisplayName() + " (x" + stack.stackSize + ")" : "null"));
+            }
+        } else {
+            System.out.println("  null");
+        }
+
+        // Текущие выходные данные
+        ItemStack[] currentOutputs = getOutputs();
+        System.out.println("Current Outputs (" + (currentOutputs != null ? currentOutputs.length : 0) + "):");
+        if (currentOutputs != null) {
+            for (int i = 0; i < currentOutputs.length; i++) {
+                ItemStack stack = currentOutputs[i];
+                System.out.println("  [" + i + "]: " + (stack != null ?
+                        stack.getDisplayName() + " (x" + stack.stackSize + ")" : "null"));
+            }
+        } else {
+            System.out.println("  null");
+        }
+
+        // Информация о слотах
+        System.out.println("Slots Info:");
+        System.out.println("  Crafting Slots: " + this.craftingSlots.length);
+        for (int i = 0; i < this.craftingSlots.length; i++) {
+            ItemStack stack = this.craftingSlots[i].getStack();
+            System.out.println("    Crafting[" + i + "]: " + (stack != null ?
+                    stack.getDisplayName() + " (x" + stack.stackSize + ")" : "null"));
+        }
+
+        System.out.println("  Input Slots: " + this.inputSlots.size());
+        for (int i = 0; i < this.inputSlots.size(); i++) {
+            ItemStack stack = this.inputSlots.get(i).getStack();
+            System.out.println("    Input[" + i + "]: " + (stack != null ?
+                    stack.getDisplayName() + " (x" + stack.stackSize + ")" : "null"));
+        }
+
+        System.out.println("  Processing Output Slots: " + this.processingOutputSlots.length);
+        for (int i = 0; i < this.processingOutputSlots.length; i++) {
+            ItemStack stack = this.processingOutputSlots[i].getStack();
+            System.out.println("    ProcessingOut[" + i + "]: " + (stack != null ?
+                    stack.getDisplayName() + " (x" + stack.stackSize + ")" : "null"));
+        }
+
+        ItemStack craftingOut = this.craftingOutputSlot.getStack();
+        System.out.println("  Crafting Output Slot: " + (craftingOut != null ?
+                craftingOut.getDisplayName() + " (x" + craftingOut.stackSize + ")" : "null"));
+
+        ItemStack cOutStack = this.cOut.getStackInSlot(0);
+        System.out.println("  cOut Inventory: " + (cOutStack != null ?
+                cOutStack.getDisplayName() + " (x" + cOutStack.stackSize + ")" : "null"));
+
+        System.out.println("=== END DEBUG INFO ===");
+        System.out.println(" ");
+    }
+
+    /**
+     * Рекурсивно выводит все NBT данные
+     */
+    private void debugNBTData(String prefix, NBTTagCompound nbt) {
+        if (nbt == null) {
+            System.out.println(prefix + ": null");
+            return;
+        }
+
+        // Совместимый способ итерации по ключам NBT
+        java.util.Set<String> keys = nbt.func_150296_c(); // getKeySet() в более старых версиях
+        for (String key : keys) {
+            // Вместо getTagId используем проверку типа через методы hasKey
+            if (nbt.hasKey(key, 1)) { // BYTE
+                System.out.println(prefix + "." + key + ": " + nbt.getByte(key) + " (byte)");
+            } else if (nbt.hasKey(key, 2)) { // SHORT
+                System.out.println(prefix + "." + key + ": " + nbt.getShort(key) + " (short)");
+            } else if (nbt.hasKey(key, 3)) { // INT
+                System.out.println(prefix + "." + key + ": " + nbt.getInteger(key) + " (int)");
+            } else if (nbt.hasKey(key, 4)) { // LONG
+                System.out.println(prefix + "." + key + ": " + nbt.getLong(key) + " (long)");
+            } else if (nbt.hasKey(key, 5)) { // FLOAT
+                System.out.println(prefix + "." + key + ": " + nbt.getFloat(key) + " (float)");
+            } else if (nbt.hasKey(key, 6)) { // DOUBLE
+                System.out.println(prefix + "." + key + ": " + nbt.getDouble(key) + " (double)");
+            } else if (nbt.hasKey(key, 7)) { // BYTE_ARRAY
+                byte[] byteArray = nbt.getByteArray(key);
+                System.out.println(prefix + "." + key + ": byte[" + byteArray.length + "]");
+            } else if (nbt.hasKey(key, 8)) { // STRING
+                System.out.println(prefix + "." + key + ": \"" + nbt.getString(key) + "\" (string)");
+            } else if (nbt.hasKey(key, 9)) { // LIST
+                NBTTagList list = nbt.getTagList(key, 10); // 10 = COMPOUND
+                System.out.println(prefix + "." + key + ": list[" + list.tagCount() + "]");
+                for (int i = 0; i < list.tagCount(); i++) {
+                    debugNBTData(prefix + "." + key + "[" + i + "]", list.getCompoundTagAt(i));
+                }
+            } else if (nbt.hasKey(key, 10)) { // COMPOUND
+                debugNBTData(prefix + "." + key, nbt.getCompoundTag(key));
+            } else if (nbt.hasKey(key, 11)) { // INT_ARRAY
+                int[] intArray = nbt.getIntArray(key);
+                System.out.println(prefix + "." + key + ": int[" + intArray.length + "]");
+            } else {
+                System.out.println(prefix + "." + key + ": unknown type");
+            }
+        }
+    }
+
+    /**
+     * Выводит отладочную информацию о новом NBT после кодирования
+     */
+    private void debugEncodedNBT(NBTTagCompound encodedValue) {
+        System.out.println("=== ENCODED PATTERN NBT ===");
+        if (encodedValue != null) {
+            debugNBTData("Encoded", encodedValue);
+
+            // Детальная информация о входах и выходах
+            if (encodedValue.hasKey("in")) {
+                NBTTagList tagIn = encodedValue.getTagList("in", 10);
+                System.out.println("Encoded Inputs (" + tagIn.tagCount() + "):");
+                for (int i = 0; i < tagIn.tagCount(); i++) {
+                    NBTTagCompound itemTag = tagIn.getCompoundTagAt(i);
+                    if (itemTag.hasKey("id")) {
+                        // Совместимый способ получения информации о предмете
+                        String itemId = itemTag.getString("id");
+                        byte count = itemTag.hasKey("Count") ? itemTag.getByte("Count") : 1;
+                        short damage = itemTag.hasKey("Damage") ? itemTag.getShort("Damage") : 0;
+
+                        System.out.println("  [" + i + "]: " + itemId +
+                                " (Damage: " + damage + ", Count: " + count + ")");
+                    } else {
+                        System.out.println("  [" + i + "]: empty");
+                    }
+                }
+            }
+
+            if (encodedValue.hasKey("out")) {
+                NBTTagList tagOut = encodedValue.getTagList("out", 10);
+                System.out.println("Encoded Outputs (" + tagOut.tagCount() + "):");
+                for (int i = 0; i < tagOut.tagCount(); i++) {
+                    NBTTagCompound itemTag = tagOut.getCompoundTagAt(i);
+                    if (itemTag.hasKey("id")) {
+                        String itemId = itemTag.getString("id");
+                        byte count = itemTag.hasKey("Count") ? itemTag.getByte("Count") : 1;
+                        short damage = itemTag.hasKey("Damage") ? itemTag.getShort("Damage") : 0;
+
+                        System.out.println("  [" + i + "]: " + itemId +
+                                " (Damage: " + damage + ", Count: " + count + ")");
+                    } else {
+                        System.out.println("  [" + i + "]: empty");
+                    }
+                }
+            }
+
+            // Дополнительная информация о флагах
+            System.out.println("Pattern Flags:");
+            System.out.println("  Crafting: " + encodedValue.getBoolean("crafting"));
+            System.out.println("  Substitute: " + encodedValue.getBoolean("substitute"));
+            System.out.println("  BeSubstitute: " + encodedValue.getBoolean("beSubstitute"));
+            if (encodedValue.hasKey("author")) {
+                System.out.println("  Author: " + encodedValue.getString("author"));
+            }
+        } else {
+            System.out.println("Encoded NBT: null");
+        }
+        System.out.println("=== END ENCODED NBT ===");
     }
 }
