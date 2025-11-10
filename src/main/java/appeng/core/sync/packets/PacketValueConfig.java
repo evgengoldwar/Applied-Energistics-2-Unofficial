@@ -204,7 +204,6 @@ public class PacketValueConfig extends AppEngPacket {
                 }
             }
         } else if (this.Name.equals("InterfaceTerminal.UpdatePattern")) {
-            // Обработка обновления паттерна в интерфейс терминале
             if (c instanceof ContainerInterfaceTerminal cit) {
                 String[] parts = this.Value.split(":", 3);
                 if (parts.length == 3) {
@@ -217,18 +216,10 @@ public class PacketValueConfig extends AppEngPacket {
                             NBTTagCompound nbt = (NBTTagCompound) JsonToNBT.func_150315_a(parts[2]);
                             patternStack = ItemStack.loadItemStackFromNBT(nbt);
 
-                            // Гарантируем, что размер стека правильный
                             if (patternStack != null && patternStack.stackSize <= 0) {
                                 patternStack.stackSize = 1;
-                                System.out.println("Fixed stack size to 1");
-                            }
-
-                            if (patternStack != null) {
-                                System.out.println("Loaded pattern stack: " + patternStack.getDisplayName() +
-                                        ", count: " + patternStack.stackSize);
                             }
                         } catch (NBTException e) {
-                            System.out.println("Failed to parse pattern NBT: " + e.getMessage());
                             e.printStackTrace();
                         }
                     }
