@@ -35,19 +35,28 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
     private static final int VANILLA_Y_OFFSET = 167;
     private static final int VANILLA_SLOT_SIZE = 18;
-    private static final int CRAFTING_SLOTS_OFFSET_Y = 93;
+
     private static final int CRAFTING_SLOTS_OFFSET_X = 18;
-    private static final int OUTPUT_SLOTS_OFFSET_Y_SMALL = 93;
+    private static final int CRAFTING_SLOTS_OFFSET_Y = 93;
+
+    private static final int CRAFTING_OUTPUT_SLOT_OFFSET_X_SMALL = 110;
+    private static final int CRAFTING_OUTPUT_SLOT_OFFSET_Y_SMALL = 111;
+
     private static final int OUTPUT_SLOTS_OFFSET_X_SMALL = 110;
-    private static final int PATTERN_SLOTS_OFFSET_Y_SMALL = 88;
+    private static final int OUTPUT_SLOTS_OFFSET_Y_SMALL = 93;
+
     private static final int PATTERN_SLOTS_OFFSET_X_SMALL = 147;
-    private static final int INPUT_SLOTS_OFFSET_Y_SMALL = 93;
+    private static final int PATTERN_SLOTS_OFFSET_Y_SMALL = 131;
+
     private static final int INPUT_SLOTS_OFFSET_X_SMALL = 18;
+    private static final int INPUT_SLOTS_OFFSET_Y_SMALL = 93;
 
     private final Slot patternValue;
-    private ICraftingPatternDetails patternDetails;
+    private final ItemStack[] savedCraftingInputs = new ItemStack[9];
+    private final ItemStack[] savedCraftingOutputs = new ItemStack[1];
+    private final ItemStack[] savedProcessingInputs = new ItemStack[9];
+    private final ItemStack[] savedProcessingOutputs = new ItemStack[3];
     private final List<SlotFake> inputSlots = new ArrayList<>();
-    private ItemStack originalPatternStack;
     private final IInventory crafting;
     private final SlotFakeCraftingMatrix[] craftingSlots = new SlotFakeCraftingMatrix[9];
     private final AppEngSlot craftingOutputSlot;
@@ -66,10 +75,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private ContainerInterfaceTerminal sourceContainer;
     private long sourceEntryId = -1;
     private int sourceSlot = -1;
-    private final ItemStack[] savedCraftingInputs = new ItemStack[9];
-    private final ItemStack[] savedCraftingOutputs = new ItemStack[1];
-    private final ItemStack[] savedProcessingInputs = new ItemStack[9];
-    private final ItemStack[] savedProcessingOutputs = new ItemStack[3];
+    private ICraftingPatternDetails patternDetails;
+    private ItemStack originalPatternStack;
 
     public ContainerEditorPattern(final InventoryPlayer ip, final PartInterfaceTerminal te) {
         super(ip, te);
@@ -111,8 +118,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         this.craftingOutputSlot = new AppEngSlot(
                 this.cOut,
                 0,
-                OUTPUT_SLOTS_OFFSET_X_SMALL,
-                OUTPUT_SLOTS_OFFSET_Y_SMALL) {
+                CRAFTING_OUTPUT_SLOT_OFFSET_X_SMALL,
+                CRAFTING_OUTPUT_SLOT_OFFSET_Y_SMALL) {
 
             @Override
             public void putStack(ItemStack stack) {}
@@ -505,18 +512,6 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         craftingOutputSlot.putStack(null);
     }
 
-    public List<SlotFake> getInputSlots() {
-        return inputSlots;
-    }
-
-    public AppEngSlot getCraftingOutputSlot() {
-        return craftingOutputSlot;
-    }
-
-    public OptionalSlotFake[] getProcessingOutputSlots() {
-        return processingOutputSlots;
-    }
-
     public ICraftingPatternDetails getPatternDetails() {
         return patternDetails;
     }
@@ -663,8 +658,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
     private void updateOutputSlotsVisibility() {
         if (this.craftingMode) {
-            craftingOutputSlot.xDisplayPosition = OUTPUT_SLOTS_OFFSET_X_SMALL;
-            craftingOutputSlot.yDisplayPosition = OUTPUT_SLOTS_OFFSET_Y_SMALL;
+            craftingOutputSlot.xDisplayPosition = CRAFTING_OUTPUT_SLOT_OFFSET_X_SMALL;
+            craftingOutputSlot.yDisplayPosition = CRAFTING_OUTPUT_SLOT_OFFSET_Y_SMALL;
 
             for (int i = 0; i < processingOutputSlots.length; i++) {
                 processingOutputSlots[i].xDisplayPosition = -1000;
@@ -679,18 +674,6 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                 processingOutputSlots[i].yDisplayPosition = OUTPUT_SLOTS_OFFSET_Y_SMALL + i * VANILLA_SLOT_SIZE;
             }
         }
-    }
-
-    public void toggleSubstitute() {
-        this.substitute = !this.substitute;
-    }
-
-    public void toggleBeSubstitute() {
-        this.beSubstitute = !this.beSubstitute;
-    }
-
-    public ItemStack getEncodedPattern() {
-        return originalPatternStack;
     }
 
     @Override
@@ -740,9 +723,6 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
     @Override
     public void onContainerClosed(final EntityPlayer player) {
-        if (originalPatternStack != null && sourceEntryId >= 0) {
-            encodePattern();
-        }
         super.onContainerClosed(player);
     }
 
