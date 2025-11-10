@@ -27,6 +27,28 @@ public class GuiEditorPattern extends AEBaseGui {
 
     private static final int INVENTORY_STRING_Y_OFFSET = 100;
     private static final int PATTERN_STRING_Y_OFFSET = 182;
+    private static final int SMALL_BUTTON_Y_OFFSET = 17;
+
+    private static final int TAB_CRAFT_BUTTON_X_OFFSET = 173;
+    private static final int TAB_CRAFT_BUTTON_Y_OFFSET = 75;
+
+    private static final int TAB_PROCESS_BUTTON_X_OFFSET = 173;
+    private static final int TAB_PROCESS_BUTTON_Y_OFFSET = 75;
+
+    private static final int SUBSTITUTIONS_BUTTON_X_OFFSET = 84;
+    private static final int SUBSTITUTIONS_BUTTON_Y_OFFSET = 70 + SMALL_BUTTON_Y_OFFSET;
+
+    private static final int BE_SUBSTITUTIONS_BUTTON_X_OFFSET = 84;
+    private static final int BE_SUBSTITUTIONS_BUTTON_Y_OFFSET = 80 + SMALL_BUTTON_Y_OFFSET;
+
+    private static final int CLEAR_BUTTON_X_OFFSET = 74;
+    private static final int CLEAR_BUTTON_Y_OFFSET = 70 + SMALL_BUTTON_Y_OFFSET;
+
+    private static final int DOUBLE_BUTTON_X_OFFSET = 74;
+    private static final int DOUBLE_BUTTON_Y_OFFSET = 80 + SMALL_BUTTON_Y_OFFSET;
+
+    private static final int ENCODE_BUTTON_X_OFFSET = 147;
+    private static final int ENCODE_BUTTON_Y_OFFSET = 108;
 
     private final ContainerEditorPattern container;
     private GuiTabButton tabCraftButton;
@@ -51,63 +73,75 @@ public class GuiEditorPattern extends AEBaseGui {
         super.initGui();
 
         this.tabCraftButton = new GuiTabButton(
-                this.guiLeft + 173,
-                this.guiTop + 6,
+                this.guiLeft + TAB_CRAFT_BUTTON_X_OFFSET,
+                this.guiTop + TAB_CRAFT_BUTTON_Y_OFFSET,
                 new ItemStack(Blocks.crafting_table),
                 GuiText.CraftingPattern.getLocal(),
                 itemRender);
         this.buttonList.add(this.tabCraftButton);
 
         this.tabProcessButton = new GuiTabButton(
-                this.guiLeft + 173,
-                this.guiTop + 6,
+                this.guiLeft + TAB_PROCESS_BUTTON_X_OFFSET,
+                this.guiTop + TAB_PROCESS_BUTTON_Y_OFFSET,
                 new ItemStack(Blocks.furnace),
                 GuiText.ProcessingPattern.getLocal(),
                 itemRender);
         this.buttonList.add(this.tabProcessButton);
 
         this.substitutionsEnabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + 70,
+                this.guiLeft + SUBSTITUTIONS_BUTTON_X_OFFSET,
+                this.guiTop + SUBSTITUTIONS_BUTTON_Y_OFFSET,
                 Settings.ACTIONS,
                 ItemSubstitution.ENABLED);
         this.substitutionsEnabledBtn.setHalfSize(true);
         this.buttonList.add(this.substitutionsEnabledBtn);
 
         this.substitutionsDisabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + 70,
+                this.guiLeft + SUBSTITUTIONS_BUTTON_X_OFFSET,
+                this.guiTop + SUBSTITUTIONS_BUTTON_Y_OFFSET,
                 Settings.ACTIONS,
                 ItemSubstitution.DISABLED);
         this.substitutionsDisabledBtn.setHalfSize(true);
         this.buttonList.add(this.substitutionsDisabledBtn);
 
         this.beSubstitutionsEnabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + 80,
+                this.guiLeft + BE_SUBSTITUTIONS_BUTTON_X_OFFSET,
+                this.guiTop + BE_SUBSTITUTIONS_BUTTON_Y_OFFSET,
                 Settings.ACTIONS,
                 PatternBeSubstitution.ENABLED);
         this.beSubstitutionsEnabledBtn.setHalfSize(true);
         this.buttonList.add(this.beSubstitutionsEnabledBtn);
 
         this.beSubstitutionsDisabledBtn = new GuiImgButton(
-                this.guiLeft + 84,
-                this.guiTop + 80,
+                this.guiLeft + BE_SUBSTITUTIONS_BUTTON_X_OFFSET,
+                this.guiTop + BE_SUBSTITUTIONS_BUTTON_Y_OFFSET,
                 Settings.ACTIONS,
                 PatternBeSubstitution.DISABLED);
         this.beSubstitutionsDisabledBtn.setHalfSize(true);
         this.buttonList.add(this.beSubstitutionsDisabledBtn);
 
-        this.clearBtn = new GuiImgButton(this.guiLeft + 74, this.guiTop + 70, Settings.ACTIONS, ActionItems.CLOSE);
+        this.clearBtn = new GuiImgButton(
+                this.guiLeft + CLEAR_BUTTON_X_OFFSET,
+                this.guiTop + CLEAR_BUTTON_Y_OFFSET,
+                Settings.ACTIONS,
+                ActionItems.CLOSE);
         this.clearBtn.setHalfSize(true);
         this.buttonList.add(this.clearBtn);
 
-        this.encodeBtn = new GuiImgButton(this.guiLeft + 147, this.guiTop + 70, Settings.ACTIONS, ActionItems.ENCODE);
-        this.buttonList.add(this.encodeBtn);
-
-        this.doubleBtn = new GuiImgButton(this.guiLeft + 74, this.guiTop + 80, Settings.ACTIONS, ActionItems.DOUBLE);
+        this.doubleBtn = new GuiImgButton(
+                this.guiLeft + DOUBLE_BUTTON_X_OFFSET,
+                this.guiTop + DOUBLE_BUTTON_Y_OFFSET,
+                Settings.ACTIONS,
+                ActionItems.DOUBLE);
         this.doubleBtn.setHalfSize(true);
         this.buttonList.add(this.doubleBtn);
+
+        this.encodeBtn = new GuiImgButton(
+                this.guiLeft + ENCODE_BUTTON_X_OFFSET,
+                this.guiTop + ENCODE_BUTTON_Y_OFFSET,
+                Settings.ACTIONS,
+                ActionItems.ENCODE);
+        this.buttonList.add(this.encodeBtn);
 
         updateButtonVisibility();
     }
