@@ -20,7 +20,9 @@ import appeng.client.gui.widgets.GuiTabButton;
 import appeng.container.implementations.ContainerEditorPattern;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
+import appeng.core.sync.packets.PacketInventoryAction;
 import appeng.core.sync.packets.PacketValueConfig;
+import appeng.helpers.InventoryAction;
 import appeng.parts.reporting.PartInterfaceTerminal;
 
 public class GuiEditorPattern extends AEBaseGui {
@@ -214,13 +216,9 @@ public class GuiEditorPattern extends AEBaseGui {
     @Override
     protected void keyTyped(final char character, final int key) {
         if (key == Keyboard.KEY_ESCAPE || key == Keyboard.KEY_E) {
-            try {
-                NetworkHandler.instance
-                        .sendToServer(new PacketValueConfig("PatternEditor.ReopenInterfaceTerminal", "1"));
-            } catch (IOException e) {
-                e.printStackTrace();
-                this.mc.thePlayer.closeScreen();
-            }
+            InventoryAction action = InventoryAction.REOPEN_INTERFACE_TERMINAL;
+            PacketInventoryAction p = new PacketInventoryAction(action, 0, 0);
+            NetworkHandler.instance.sendToServer(p);
         } else {
             super.keyTyped(character, key);
         }

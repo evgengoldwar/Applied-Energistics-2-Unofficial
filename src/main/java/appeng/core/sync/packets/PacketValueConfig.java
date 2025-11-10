@@ -51,11 +51,8 @@ import appeng.container.implementations.ContainerSecurity;
 import appeng.container.implementations.ContainerStorageBus;
 import appeng.container.interfaces.ICraftingCPUSelectorContainer;
 import appeng.core.sync.AppEngPacket;
-import appeng.core.sync.GuiBridge;
 import appeng.core.sync.network.INetworkInfo;
 import appeng.helpers.IMouseWheelItem;
-import appeng.parts.reporting.PartInterfaceTerminal;
-import appeng.util.Platform;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -204,16 +201,6 @@ public class PacketValueConfig extends AppEngPacket {
                         cep.setBeSubstitute(newBeSubstitute);
                     }
                     case "PatternEditor.Double" -> cep.doubleStacks(Integer.parseInt(this.Value));
-                    case "PatternEditor.ReopenInterfaceTerminal" -> {
-                        if (cep.getSourceContainer() != null && cep.getSourceContainer().getTarget() instanceof PartInterfaceTerminal terminal) {
-                            Platform.openGUI(
-                                    player,
-                                    terminal.getHost().getTile(),
-                                    terminal.getSide(),
-                                    GuiBridge.GUI_INTERFACE_TERMINAL
-                            );
-                        }
-                    }
                 }
             }
         } else if (this.Name.equals("InterfaceTerminal.UpdatePattern")) {

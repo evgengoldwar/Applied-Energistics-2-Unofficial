@@ -34,6 +34,7 @@ import appeng.core.sync.AppEngPacket;
 import appeng.core.sync.GuiBridge;
 import appeng.core.sync.network.INetworkInfo;
 import appeng.helpers.InventoryAction;
+import appeng.parts.reporting.PartInterfaceTerminal;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import io.netty.buffer.ByteBuf;
@@ -178,27 +179,21 @@ public class PacketInventoryAction extends AppEngPacket {
             } else if (action == InventoryAction.EDIT_PATTERN_ITEM) {
                 final ContainerOpenContext context = baseContainer.getOpenContext();
                 if (context != null && baseContainer instanceof ContainerInterfaceTerminal sourceContainer) {
-
-                    // Используем существующий метод открытия GUI
                     Platform.openGUI(
                             sender,
                             context.getTile(),
                             baseContainer.getOpenContext().getSide(),
                             GuiBridge.GUI_EDITOR_PATTERN);
 
-                    // После открытия GUI модифицируем контейнер
                     if (sender.openContainer instanceof ContainerEditorPattern cep) {
-                        // Сохраняем ссылку на sourceContainer в NBT или временном хранилище
                         NBTTagCompound extraData = new NBTTagCompound();
                         extraData.setLong("sourceEntryId", id);
                         extraData.setInteger("sourceSlot", slot);
 
-                        // Передаем данные в контейнер
                         cep.setSourceData(sourceContainer, id, slot);
 
                         if (baseContainer.getTargetStack() != null) {
                             ItemStack sourceStack = baseContainer.getTargetStack().getItemStack();
-                            System.out.println("Source stack: " + sourceStack);
 
                             if (sourceStack.getItem() instanceof ICraftingPatternItem patternItem) {
                                 ICraftingPatternDetails patternDetails = patternItem
@@ -206,11 +201,21 @@ public class PacketInventoryAction extends AppEngPacket {
                                 if (patternDetails != null) {
                                     cep.setPatternDetails(patternDetails, sourceStack);
                                     cep.getPatternValue().putStack(sourceStack.copy());
-                                    System.out.println("Pattern details loaded successfully");
                                 }
                             }
                         }
                         cep.detectAndSendChanges();
+                    }
+                }
+            } else if (action == InventoryAction.REOPEN_INTERFACE_TERMINAL) {
+                if (baseContainer instanceof ContainerEditorPattern cep) {
+                    if (cep.getSourceContainer() != null
+                            && cep.getSourceContainer().getTarget() instanceof PartInterfaceTerminal terminal) {
+                        Platform.openGUI(
+                                sender,
+                                terminal.getHost().getTile(),
+                                terminal.getSide(),
+                                GuiBridge.GUI_INTERFACE_TERMINAL);
                     }
                 }
             } else {
