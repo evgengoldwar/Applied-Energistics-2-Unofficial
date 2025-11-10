@@ -63,7 +63,6 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
     private IGrid grid;
     private IActionHost anchor;
     private boolean wasOff;
-    private int scrollPosition = 0;
 
     public ContainerInterfaceTerminal(final InventoryPlayer ip, final IActionHost anchor) {
         super(ip, anchor);
@@ -81,13 +80,6 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
         this.bindPlayerInventory(ip, 14, 3);
     }
 
-    public void setScrollPosition(int scroll) {
-        this.scrollPosition = scroll;
-    }
-
-    public int getScrollPosition() {
-        return this.scrollPosition;
-    }
 
     @Override
     public void detectAndSendChanges() {
