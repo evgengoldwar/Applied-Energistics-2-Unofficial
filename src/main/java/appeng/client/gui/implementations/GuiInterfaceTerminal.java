@@ -209,11 +209,20 @@ public class GuiInterfaceTerminal extends AEBaseGui
 
     private void setScrollBar() {
         int maxScroll = this.masterList.getHeight() - this.viewHeight - 1;
+        GuiScrollbar scrollbar = getScrollBar();
         if (maxScroll <= 0) {
-            this.getScrollBar().setTop(52).setLeft(189).setHeight(this.viewHeight).setRange(0, 0, 1);
+            scrollbar.setTop(52).setLeft(189).setHeight(this.viewHeight).setRange(0, 0, 1);
         } else {
-            this.getScrollBar().setTop(52).setLeft(189).setHeight(this.viewHeight).setRange(0, maxScroll, 12);
+            scrollbar.setTop(52).setLeft(189).setHeight(this.viewHeight).setRange(0, maxScroll, 12);
         }
+        int scroll = ContainerInterfaceTerminal.getCurrentScrollBar();
+        if (scroll > 0) {
+            scrollbar.setCurrentScroll(ContainerInterfaceTerminal.getCurrentScrollBar());
+        }
+    }
+
+    public int getCurrentScrollBar() {
+        return getScrollBar().getCurrentScroll();
     }
 
     @Override
@@ -335,7 +344,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
 
     @Override
     protected void mouseClicked(final int xCoord, final int yCoord, final int btn) {
-
+        ContainerInterfaceTerminal.setCurrentScrollBar(0);
         if (handleMiddleClick(xCoord, yCoord, btn)) {
             return;
         }
@@ -416,6 +425,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
     @Override
     public void onGuiClosed() {
         super.onGuiClosed();
+        ContainerInterfaceTerminal.setCurrentScrollBar(0);
         searchFieldInputsText = searchFieldInputs.getText();
         searchFieldOutputsText = searchFieldOutputs.getText();
         searchFieldNamesText = searchFieldNames.getText();

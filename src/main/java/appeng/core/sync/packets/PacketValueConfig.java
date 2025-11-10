@@ -21,9 +21,6 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTException;
-import net.minecraft.nbt.NBTTagCompound;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
@@ -37,7 +34,6 @@ import appeng.container.implementations.ContainerCraftConfirm;
 import appeng.container.implementations.ContainerCraftingCPU;
 import appeng.container.implementations.ContainerEditorPattern;
 import appeng.container.implementations.ContainerInterface;
-import appeng.container.implementations.ContainerInterfaceTerminal;
 import appeng.container.implementations.ContainerLevelEmitter;
 import appeng.container.implementations.ContainerMEMonitorable;
 import appeng.container.implementations.ContainerNetworkTool;
@@ -201,30 +197,6 @@ public class PacketValueConfig extends AppEngPacket {
                         cep.setBeSubstitute(newBeSubstitute);
                     }
                     case "PatternEditor.Double" -> cep.doubleStacks(Integer.parseInt(this.Value));
-                }
-            }
-        } else if (this.Name.equals("InterfaceTerminal.UpdatePattern")) {
-            if (c instanceof ContainerInterfaceTerminal cit) {
-                String[] parts = this.Value.split(":", 3);
-                if (parts.length == 3) {
-                    long entryId = Long.parseLong(parts[0]);
-                    int slot = Integer.parseInt(parts[1]);
-                    ItemStack patternStack = null;
-
-                    if (!"null".equals(parts[2])) {
-                        try {
-                            NBTTagCompound nbt = (NBTTagCompound) JsonToNBT.func_150315_a(parts[2]);
-                            patternStack = ItemStack.loadItemStackFromNBT(nbt);
-
-                            if (patternStack != null && patternStack.stackSize <= 0) {
-                                patternStack.stackSize = 1;
-                            }
-                        } catch (NBTException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    cit.updatePattern(entryId, slot, patternStack);
                 }
             }
         } else if (c instanceof IConfigurableObject) {

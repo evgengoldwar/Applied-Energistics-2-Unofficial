@@ -11,7 +11,6 @@
 
 package appeng.container.implementations;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,7 +40,6 @@ import appeng.container.AEBaseContainer;
 import appeng.core.features.registries.InterfaceTerminalRegistry;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInterfaceTerminalUpdate;
-import appeng.core.sync.packets.PacketValueConfig;
 import appeng.helpers.InventoryAction;
 import appeng.items.misc.ItemEncodedPattern;
 import appeng.parts.AEBasePart;
@@ -63,6 +61,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
     private IGrid grid;
     private IActionHost anchor;
     private boolean wasOff;
+    private static int currentScrollBar;
 
     public ContainerInterfaceTerminal(final InventoryPlayer ip, final IActionHost anchor) {
         super(ip, anchor);
@@ -80,6 +79,13 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
         this.bindPlayerInventory(ip, 14, 3);
     }
 
+    public static int getCurrentScrollBar() {
+        return currentScrollBar;
+    }
+
+    public static void setCurrentScrollBar(int currentScrollBar) {
+        ContainerInterfaceTerminal.currentScrollBar = currentScrollBar;
+    }
 
     @Override
     public void detectAndSendChanges() {

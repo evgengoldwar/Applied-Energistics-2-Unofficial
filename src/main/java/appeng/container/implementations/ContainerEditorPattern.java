@@ -80,6 +80,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
     private int sourceSlot = -1;
     private ICraftingPatternDetails patternDetails;
     private ItemStack originalPatternStack;
+    private int sourceScrollPosition = 0;
 
     public ContainerEditorPattern(final InventoryPlayer ip, final PartInterfaceTerminal te) {
         super(ip, te);
@@ -188,6 +189,14 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         this.sourceContainer = sourceContainer;
         this.sourceEntryId = sourceEntryId;
         this.sourceSlot = sourceSlot;
+    }
+
+    public void setSourceScrollPosition(int scrollPosition) {
+        this.sourceScrollPosition = scrollPosition;
+    }
+
+    public int getSourceScrollPosition() {
+        return this.sourceScrollPosition;
     }
 
     public World getWorld() {
@@ -406,7 +415,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         if (sourceEntryId >= 0 && sourceSlot >= 0 && sourceContainer != null) {
             try {
                 sourceContainer.updatePattern(sourceEntryId, sourceSlot, updatedPattern);
-            } catch (final Exception e) {}
+            } catch (final Exception ignored) {}
         }
     }
 

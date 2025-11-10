@@ -12,6 +12,7 @@ package appeng.core.sync.packets;
 
 import java.io.IOException;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -22,6 +23,7 @@ import appeng.api.implementations.ICraftingPatternItem;
 import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.client.ClientHelper;
+import appeng.client.gui.implementations.GuiInterfaceTerminal;
 import appeng.container.AEBaseContainer;
 import appeng.container.ContainerOpenContext;
 import appeng.container.implementations.ContainerCraftAmount;
@@ -179,13 +181,17 @@ public class PacketInventoryAction extends AppEngPacket {
             } else if (action == InventoryAction.EDIT_PATTERN_ITEM) {
                 final ContainerOpenContext context = baseContainer.getOpenContext();
                 if (context != null && baseContainer instanceof ContainerInterfaceTerminal sourceContainer) {
+                    int currentScroll = 0;
+                    if (Minecraft.getMinecraft().currentScreen instanceof GuiInterfaceTerminal gui) {
+                        currentScroll = gui.getCurrentScrollBar();
+                    }
                     Platform.openGUI(
                             sender,
                             context.getTile(),
                             baseContainer.getOpenContext().getSide(),
                             GuiBridge.GUI_EDITOR_PATTERN);
-
                     if (sender.openContainer instanceof ContainerEditorPattern cep) {
+                        cep.setSourceScrollPosition(currentScroll);
                         NBTTagCompound extraData = new NBTTagCompound();
                         extraData.setLong("sourceEntryId", id);
                         extraData.setInteger("sourceSlot", slot);
@@ -209,6 +215,7 @@ public class PacketInventoryAction extends AppEngPacket {
                 }
             } else if (action == InventoryAction.REOPEN_INTERFACE_TERMINAL) {
                 if (baseContainer instanceof ContainerEditorPattern cep) {
+                    int curScrollBar = cep.getSourceScrollPosition();
                     if (cep.getSourceContainer() != null
                             && cep.getSourceContainer().getTarget() instanceof PartInterfaceTerminal terminal) {
                         Platform.openGUI(
@@ -216,6 +223,7 @@ public class PacketInventoryAction extends AppEngPacket {
                                 terminal.getHost().getTile(),
                                 terminal.getSide(),
                                 GuiBridge.GUI_INTERFACE_TERMINAL);
+                        ContainerInterfaceTerminal.setCurrentScrollBar(curScrollBar);
                     }
                 }
             } else {
