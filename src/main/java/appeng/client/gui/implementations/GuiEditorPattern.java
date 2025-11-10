@@ -25,15 +25,16 @@ import appeng.parts.reporting.PartInterfaceTerminal;
 
 public class GuiEditorPattern extends AEBaseGui {
 
-    private static final int INVENTORY_STRING_Y_OFFSET = 100;
-    private static final int PATTERN_STRING_Y_OFFSET = 182;
+    private static final int INVENTORY_STRING_Y_OFFSET = 101;
+    private static final int PATTERN_STRING_Y_OFFSET = 179;
     private static final int SMALL_BUTTON_Y_OFFSET = 17;
+    private static final int COLOR = 0x404040;
 
-    private static final int TAB_CRAFT_BUTTON_X_OFFSET = 173;
-    private static final int TAB_CRAFT_BUTTON_Y_OFFSET = 75;
+    private static final int TAB_CRAFT_BUTTON_X_OFFSET = 172;
+    private static final int TAB_CRAFT_BUTTON_Y_OFFSET = 74;
 
-    private static final int TAB_PROCESS_BUTTON_X_OFFSET = 173;
-    private static final int TAB_PROCESS_BUTTON_Y_OFFSET = 75;
+    private static final int TAB_PROCESS_BUTTON_X_OFFSET = 172;
+    private static final int TAB_PROCESS_BUTTON_Y_OFFSET = 74;
 
     private static final int SUBSTITUTIONS_BUTTON_X_OFFSET = 84;
     private static final int SUBSTITUTIONS_BUTTON_Y_OFFSET = 70 + SMALL_BUTTON_Y_OFFSET;
@@ -180,8 +181,8 @@ public class GuiEditorPattern extends AEBaseGui {
 
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
-        fontRendererObj.drawString("Pattern Editor", 8, this.ySize - PATTERN_STRING_Y_OFFSET, 0);
-        fontRendererObj.drawString(GuiText.inventory.getLocal(), 8, this.ySize - INVENTORY_STRING_Y_OFFSET, 0);
+        fontRendererObj.drawString("Pattern Editor", 8, this.ySize - PATTERN_STRING_Y_OFFSET, COLOR);
+        fontRendererObj.drawString(GuiText.inventory.getLocal(), 8, this.ySize - INVENTORY_STRING_Y_OFFSET, COLOR);
     }
 
     private void updateButtonVisibility() {
@@ -205,7 +206,8 @@ public class GuiEditorPattern extends AEBaseGui {
 
     @Override
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY) {
-        bindTexture("guis/pattern.png");
+        boolean isCraftingMode = this.container.isCraftingMode();
+        bindTexture(isCraftingMode ? "guis/pattern_editor_crafting.png" : "guis/pattern_editor_processing_small.png");
         drawTexturedModalRect(offsetX, offsetY, 0, 0, this.xSize, this.ySize);
     }
 
