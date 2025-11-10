@@ -361,12 +361,6 @@ public class GuiInterfaceTerminal extends AEBaseGui
         }
 
         if (hoveredItemStack.getItem() instanceof ICraftingPatternItem) {
-            System.out.println("=== Middle Click Debug ===");
-            System.out.println("Hovered entry ID: " + hoveredEntry.id);
-            System.out.println("Hovered slot: " + hoveredEntry.hoveredSlotIdx);
-            System.out.println("Pattern stack: " + hoveredItemStack.getDisplayName());
-            System.out.println("Stack size: " + hoveredItemStack.stackSize);
-
             InventoryAction action = InventoryAction.EDIT_PATTERN_ITEM;
 
             IAEItemStack stack = AEItemStack.create(hoveredItemStack);
@@ -377,8 +371,6 @@ public class GuiInterfaceTerminal extends AEBaseGui
                     hoveredEntry.id);
             NetworkHandler.instance.sendToServer(p);
 
-            System.out.println("Middle click packet sent");
-            System.out.println("=== End Debug ===");
             return true;
         }
 
