@@ -3,8 +3,6 @@ package appeng.container.implementations;
 import java.util.ArrayList;
 import java.util.List;
 
-import appeng.api.storage.data.IAEItemStack;
-import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
@@ -18,6 +16,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
 
 import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.AEBaseContainer;
 import appeng.container.guisync.GuiSync;
 import appeng.container.slot.AppEngSlot;
