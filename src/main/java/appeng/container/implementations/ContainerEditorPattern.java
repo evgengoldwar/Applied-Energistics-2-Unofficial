@@ -3,8 +3,11 @@ package appeng.container.implementations;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.Slot;
@@ -215,15 +218,15 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
 
         clearSlots();
 
-        appeng.api.storage.data.IAEStack[] inputs = patternDetails.getInputs();
-        appeng.api.storage.data.IAEStack[] outputs = patternDetails.getOutputs();
+        IAEStack[] inputs = patternDetails.getInputs();
+        IAEStack[] outputs = patternDetails.getOutputs();
 
         boolean patternIsCrafting = this.craftingMode;
 
         if (patternIsCrafting) {
             for (int i = 0; i < Math.min(inputs.length, 9); i++) {
-                if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
-                    appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) inputs[i];
+                if (inputs[i] instanceof IAEItemStack) {
+                    IAEItemStack aeStack = (IAEItemStack) inputs[i];
                     ItemStack stack = aeStack.getItemStack();
                     if (stack != null) {
                         stack = stack.copy();
@@ -233,8 +236,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
                 }
             }
 
-            if (outputs != null && outputs.length > 0 && outputs[0] instanceof appeng.api.storage.data.IAEItemStack) {
-                appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) outputs[0];
+            if (outputs != null && outputs.length > 0 && outputs[0] instanceof IAEItemStack) {
+                IAEItemStack aeStack = (IAEItemStack) outputs[0];
                 ItemStack stack = aeStack.getItemStack();
                 if (stack != null) {
                     ItemStack copy = stack.copy();
@@ -247,8 +250,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
             }
         } else {
             for (int i = 0; i < Math.min(inputs.length, 9); i++) {
-                if (inputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
-                    appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) inputs[i];
+                if (inputs[i] instanceof IAEItemStack) {
+                    IAEItemStack aeStack = (IAEItemStack) inputs[i];
                     ItemStack stack = aeStack.getItemStack();
                     if (stack != null) {
                         ItemStack copy = stack.copy();
@@ -261,8 +264,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
             }
 
             for (int i = 0; i < Math.min(outputs.length, 3); i++) {
-                if (outputs[i] instanceof appeng.api.storage.data.IAEItemStack) {
-                    appeng.api.storage.data.IAEItemStack aeStack = (appeng.api.storage.data.IAEItemStack) outputs[i];
+                if (outputs[i] instanceof IAEItemStack) {
+                    IAEItemStack aeStack = (IAEItemStack) outputs[i];
                     ItemStack stack = aeStack.getItemStack();
                     if (stack != null) {
                         ItemStack copy = stack.copy();
@@ -726,7 +729,7 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
         super.onContainerClosed(player);
     }
 
-    private static class DummyContainer extends net.minecraft.inventory.Container {
+    private static class DummyContainer extends Container {
 
         @Override
         public boolean canInteractWith(EntityPlayer player) {
