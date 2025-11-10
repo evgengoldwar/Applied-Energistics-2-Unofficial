@@ -213,8 +213,14 @@ public class GuiEditorPattern extends AEBaseGui {
 
     @Override
     protected void keyTyped(final char character, final int key) {
-        if (key == Keyboard.KEY_ESCAPE) {
-            this.mc.thePlayer.closeScreen();
+        if (key == Keyboard.KEY_ESCAPE || key == Keyboard.KEY_E) {
+            try {
+                NetworkHandler.instance
+                        .sendToServer(new PacketValueConfig("PatternEditor.ReopenInterfaceTerminal", "1"));
+            } catch (IOException e) {
+                e.printStackTrace();
+                this.mc.thePlayer.closeScreen();
+            }
         } else {
             super.keyTyped(character, key);
         }

@@ -733,4 +733,8 @@ public class ContainerEditorPattern extends AEBaseContainer implements IOptional
             return false;
         }
     }
+
+    public ContainerInterfaceTerminal getSourceContainer() {
+        return sourceContainer;
+    }
 }
