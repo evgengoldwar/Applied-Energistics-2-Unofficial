@@ -2,8 +2,15 @@ package appeng.client.render.previewBlocks;
 
 import static appeng.client.render.previewBlocks.ViewHelper.*;
 
+import appeng.api.implementations.parts.IPartCable;
+import appeng.api.parts.BusSupport;
+import appeng.api.parts.IPart;
+import appeng.api.parts.IPartHost;
+import appeng.parts.networking.PartCable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
@@ -98,5 +105,82 @@ public class RenderTerminal {
         double maxZ = 14.0 / 16.0;
 
         ViewHelper.renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    public static boolean canPlacePartHost(World world, ForgeDirection side, int x, int y, int z) {
+        int neighborX = x + side.offsetX;
+        int neighborY = y + side.offsetY;
+        int neighborZ = z + side.offsetZ;
+
+        TileEntity te = world.getTileEntity(x, y, z);
+        TileEntity neighborTe = world.getTileEntity(neighborX, neighborY, neighborZ);
+        boolean canPlaceOnNeighbor = canPlaceBlockAt(world, neighborX, neighborY, neighborZ);
+
+        if (!shouldPlaceOnNeighborBlock() && checkTe(te, side, canPlaceOnNeighbor)) {
+            return true;
+        }
+
+        return checkTe(neighborTe, side, canPlaceOnNeighbor);
+    }
+
+    private static boolean checkTe(TileEntity te, ForgeDirection side, boolean canPlaceOnNeighbor) {
+        if (!(te instanceof IPartHost partHost)) {
+            return canPlaceOnNeighbor;
+        }
+
+        if (partHost.getPart(side) != null && !shouldPlaceOnNeighborBlock()) {
+            return false;
+        }
+
+        if (partHost.getPart(side.getOpposite()) != null) {
+            return false;
+        }
+
+        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+        if (centerPart instanceof IPartCable cable) {
+            return cable.supportsBuses() == BusSupport.CABLE;
+        }
+
+        return hasParts(partHost);
+    }
+
+    public static boolean hasParts(IPartHost partHost) {
+        if (partHost.getPart(ForgeDirection.UNKNOWN) != null) {
+            return true;
+        }
+
+        for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
+            if (partHost.getPart(dir) != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean shouldPlaceOnNeighborBlock() {
+        TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(previewX, previewY, previewZ);
+
+        if (!(te instanceof IPartHost partHost)) {
+            return true;
+        }
+
+        IPart existingPart = partHost.getPart(placementSide);
+        if (existingPart != null) {
+            return true;
+        }
+
+        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+
+        if (centerPart instanceof PartCable cablePart) {
+            BusSupport busSupport = cablePart.supportsBuses();
+            return busSupport != BusSupport.CABLE;
+        }
+
+        if (hasParts(partHost)) {
+            return false;
+        }
+
+        return true;
     }
 }

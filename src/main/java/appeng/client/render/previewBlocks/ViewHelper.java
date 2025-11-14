@@ -141,7 +141,7 @@ public class ViewHelper {
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
         if (isTerminal) {
-            isValidPosition = canPlacePartHost(player.worldObj, placementSide, previewX, previewY, previewZ);
+            isValidPosition = RenderTerminal.canPlacePartHost(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
             previewX += placementSide.offsetX;
             previewY += placementSide.offsetY;
@@ -162,88 +162,11 @@ public class ViewHelper {
         return getCachedPart(item).filter(AbstractPartDisplay.class::isInstance).isPresent();
     }
 
-    private static boolean canPlacePartHost(World world, ForgeDirection side, int x, int y, int z) {
-        int neighborX = x + side.offsetX;
-        int neighborY = y + side.offsetY;
-        int neighborZ = z + side.offsetZ;
-
-        TileEntity te = world.getTileEntity(x, y, z);
-        TileEntity neighborTe = world.getTileEntity(neighborX, neighborY, neighborZ);
-        boolean canPlaceOnNeighbor = canPlaceBlockAt(world, neighborX, neighborY, neighborZ);
-
-        if (!shouldPlaceOnNeighborBlock() && checkTe(te, side, canPlaceOnNeighbor)) {
-            return true;
-        }
-
-        return checkTe(neighborTe, side, canPlaceOnNeighbor);
-    }
-
-    private static boolean checkTe(TileEntity te, ForgeDirection side, boolean canPlaceOnNeighbor) {
-        if (!(te instanceof IPartHost partHost)) {
-            return canPlaceOnNeighbor;
-        }
-
-        if (partHost.getPart(side) != null && !shouldPlaceOnNeighborBlock()) {
-            return false;
-        }
-
-        if (partHost.getPart(side.getOpposite()) != null) {
-            return false;
-        }
-
-        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-        if (centerPart instanceof IPartCable cable) {
-            return cable.supportsBuses() == BusSupport.CABLE;
-        }
-
-        return hasParts(partHost);
-    }
-
-    public static boolean hasParts(IPartHost partHost) {
-        if (partHost.getPart(ForgeDirection.UNKNOWN) != null) {
-            return true;
-        }
-
-        for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
-            if (partHost.getPart(dir) != null) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public static boolean shouldPlaceOnNeighborBlock() {
-        TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(previewX, previewY, previewZ);
-
-        if (!(te instanceof IPartHost partHost)) {
-            return true;
-        }
-
-        IPart existingPart = partHost.getPart(placementSide);
-        if (existingPart != null) {
-            return true;
-        }
-
-        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-
-        if (centerPart instanceof PartCable cablePart) {
-            BusSupport busSupport = cablePart.supportsBuses();
-            return busSupport != BusSupport.CABLE;
-        }
-
-        if (hasParts(partHost)) {
-            return false;
-        }
-
-        return true;
-    }
-
     public static void updatePartialTicks(float partialTicks) {
         currentPartialTicks = partialTicks;
     }
 
-    private static boolean canPlaceBlockAt(net.minecraft.world.World world, int x, int y, int z) {
+    public static boolean canPlaceBlockAt(net.minecraft.world.World world, int x, int y, int z) {
         if (world.isAirBlock(x, y, z)) {
             return true;
         }
