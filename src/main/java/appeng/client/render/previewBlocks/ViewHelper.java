@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
@@ -70,7 +71,7 @@ public class ViewHelper {
     }
 
     private static Optional<IPart> getCachedPart(ItemStack item) {
-        if (item == null || !(item.getItem() instanceof ItemMultiPart)) {
+        if (item == null || !(item.getItem() instanceof ItemMultiPart itemMultiPart)) {
             clearCache();
             return Optional.empty();
         }
@@ -81,7 +82,6 @@ public class ViewHelper {
 
         cachedItemStack = item.copy();
         try {
-            ItemMultiPart itemMultiPart = (ItemMultiPart) item.getItem();
             cachedPart = itemMultiPart.createPartFromItemStack(item);
         } catch (Exception e) {
             clearCache();
@@ -141,7 +141,7 @@ public class ViewHelper {
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
         if (isTerminal) {
-            isValidPosition = canPlaceTerminalOnSide(player.worldObj, previewX, previewY, previewZ, placementSide);
+            isValidPosition = canPlacePartHost(player.worldObj, placementSide, false, previewX, previewY, previewZ);
         } else if (isCable) {
             previewX += placementSide.offsetX;
             previewY += placementSide.offsetY;
@@ -162,8 +162,7 @@ public class ViewHelper {
         return getCachedPart(item).filter(AbstractPartDisplay.class::isInstance).isPresent();
     }
 
-    private static boolean canPlaceTerminalOnSide(net.minecraft.world.World world, int x, int y, int z,
-            ForgeDirection side) {
+    private static boolean canPlacePartHost(World world, ForgeDirection side, boolean isChange, int x, int y, int z) {
         int neighborX = x + side.offsetX;
         int neighborY = y + side.offsetY;
         int neighborZ = z + side.offsetZ;
@@ -171,43 +170,35 @@ public class ViewHelper {
         TileEntity neighborTe = world.getTileEntity(neighborX, neighborY, neighborZ);
         boolean canPlaceOnNeighborBlock = canPlaceBlockAt(world, neighborX, neighborY, neighborZ);
 
-        if (te instanceof IPartHost partHost) {
-            return canPlaceOnPartHost(partHost, side, canPlaceOnNeighborBlock, neighborTe);
-        }
-
-        if (neighborTe instanceof IPartHost partHost) {
-            return canPlaceOnPartHost(partHost, side, canPlaceOnNeighborBlock, null);
-        }
-
-        return canPlaceOnNeighborBlock;
-    }
-
-    private static boolean canPlaceOnPartHost(IPartHost partHost, ForgeDirection side, boolean canPlaceOnNeighborBlock,
-            TileEntity te) {
-        IPart existingPart = partHost.getPart(side);
-        if (existingPart != null && !shouldPlaceOnNeighborBlock()) {
-            return false;
-        }
-
-        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-
-        if (centerPart instanceof IPartCable cablePart) {
-            BusSupport busSupport = cablePart.supportsBuses();
-            if (busSupport == BusSupport.CABLE) {
-                return true;
+        if (isChange) {
+            return checkTe(neighborTe, side, canPlaceOnNeighborBlock);
+        } else {
+            if (shouldPlaceOnNeighborBlock()) {
+                return canPlacePartHost(world, side, true, x, y, z);
             } else {
-                return canPlaceOnNeighborBlock;
+                if (checkTe(te, side, canPlaceOnNeighborBlock)) {
+                    return checkTe(te, side, canPlaceOnNeighborBlock);
+                } else {
+                    return canPlacePartHost(world, side, true, x, y, z);
+                }
             }
         }
+    }
 
-        if (hasParts(partHost) && partHost.getPart(placementSide.getOpposite()) == null) {
-            return true;
+    private static boolean checkTe(TileEntity te, ForgeDirection side, boolean canPlaceOnNeighborBlock) {
+        if (te instanceof IPartHost partHost) {
+            IPart existingPart = partHost.getPart(side);
+            if (existingPart != null && !shouldPlaceOnNeighborBlock()) return false;
+
+            IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+            if (centerPart instanceof IPartCable cable) {
+                BusSupport busSupport = cable.supportsBuses();
+                return partHost.getPart(placementSide.getOpposite()) == null && busSupport == BusSupport.CABLE;
+            }
+
+            return partHost.getPart(placementSide.getOpposite()) == null && hasParts(partHost);
+
         }
-
-        if (te instanceof IPartHost neighborPartHost) {
-            return canPlaceOnPartHost(neighborPartHost, side, canPlaceOnNeighborBlock, null);
-        }
-
         return canPlaceOnNeighborBlock;
     }
 
