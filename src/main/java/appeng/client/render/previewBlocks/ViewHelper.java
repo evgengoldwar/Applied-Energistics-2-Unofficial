@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -162,25 +163,25 @@ public class ViewHelper {
 
     private static boolean canPlaceTerminalOnSide(net.minecraft.world.World world, int x, int y, int z,
             ForgeDirection side) {
+        int neighborX = x + side.offsetX;
+        int neighborY = y + side.offsetY;
+        int neighborZ = z + side.offsetZ;
         TileEntity te = world.getTileEntity(x, y, z);
+        if (te == null) {
+            te = world.getTileEntity(neighborX, neighborY, neighborZ);
+        }
         if (te instanceof IPartHost partHost) {
-            IPart existingPart = partHost.getPart(side);
-            if (existingPart != null) {
-                int neighborX = x + side.offsetX;
-                int neighborY = y + side.offsetY;
-                int neighborZ = z + side.offsetZ;
-                return canPlaceBlockAt(world, neighborX, neighborY, neighborZ);
-            }
-
             boolean supportsBuses = checkPartHostSupportsBuses(partHost);
             if (supportsBuses || hasParts(partHost)) {
                 return true;
             }
+
+            IPart existingPart = partHost.getPart(side);
+            if (existingPart != null) {
+                return canPlaceBlockAt(world, neighborX, neighborY, neighborZ);
+            }
         }
 
-        int neighborX = x + side.offsetX;
-        int neighborY = y + side.offsetY;
-        int neighborZ = z + side.offsetZ;
         return canPlaceBlockAt(world, neighborX, neighborY, neighborZ);
     }
 
@@ -198,18 +199,18 @@ public class ViewHelper {
         return false;
     }
 
-    private static boolean checkPartHostSupportsBuses(IPartHost partHost) {
+    public static boolean checkPartHostSupportsBuses(IPartHost partHost) {
         IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
         if (centerPart instanceof IPartCable cablePart) {
             BusSupport busSupport = cablePart.supportsBuses();
-            return (busSupport == BusSupport.DENSE_CABLE || busSupport == BusSupport.CABLE);
+            return (busSupport == BusSupport.CABLE);
         }
 
         for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
             IPart part = partHost.getPart(dir);
             if (part instanceof IPartCable cablePart) {
                 BusSupport busSupport = cablePart.supportsBuses();
-                if (busSupport == BusSupport.DENSE_CABLE || busSupport == BusSupport.CABLE) {
+                if (busSupport == BusSupport.CABLE) {
                     return true;
                 }
             }
@@ -227,7 +228,7 @@ public class ViewHelper {
             return true;
         }
 
-        net.minecraft.block.Block block = world.getBlock(x, y, z);
+        Block block = world.getBlock(x, y, z);
         return block != null && block.isReplaceable(world, x, y, z);
     }
 

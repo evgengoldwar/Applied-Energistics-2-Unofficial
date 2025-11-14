@@ -70,28 +70,9 @@ public class RenderTerminal {
             return true;
         }
 
-        boolean supportsBuses = checkPartHostSupportsBuses(partHost);
-        return !supportsBuses && !hasParts(partHost);
-    }
-
-    private static boolean checkPartHostSupportsBuses(IPartHost partHost) {
-        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-        if (centerPart instanceof IPartCable cablePart) {
-            BusSupport busSupport = cablePart.supportsBuses();
-            return (busSupport == BusSupport.DENSE_CABLE || busSupport == BusSupport.CABLE);
-        }
-
-        for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
-            IPart part = partHost.getPart(dir);
-            if (part instanceof IPartCable cablePart) {
-                BusSupport busSupport = cablePart.supportsBuses();
-                if (busSupport == BusSupport.DENSE_CABLE || busSupport == BusSupport.CABLE) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        boolean supportsBuses = ViewHelper.checkPartHostSupportsBuses(partHost);
+        if (!supportsBuses) return true;
+        return !hasParts(partHost);
     }
 
     private static void applySideRotation(double x, double y, double z, ForgeDirection side) {
