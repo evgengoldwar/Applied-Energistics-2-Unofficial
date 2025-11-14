@@ -4,13 +4,9 @@ import static appeng.client.render.previewBlocks.ViewHelper.*;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
-
-import appeng.api.parts.IPart;
-import appeng.api.parts.IPartHost;
 
 public class RenderTerminal {
 
@@ -54,23 +50,6 @@ public class RenderTerminal {
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glPopMatrix();
-    }
-
-    private static boolean shouldPlaceOnNeighborBlock() {
-        TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(previewX, previewY, previewZ);
-
-        if (!(te instanceof IPartHost partHost)) {
-            return true;
-        }
-
-        IPart existingPart = partHost.getPart(placementSide);
-        if (existingPart != null) {
-            return true;
-        }
-
-        boolean supportsBuses = ViewHelper.checkPartHostSupportsBuses(partHost);
-        if (!supportsBuses) return true;
-        return !hasParts(partHost);
     }
 
     private static void applySideRotation(double x, double y, double z, ForgeDirection side) {

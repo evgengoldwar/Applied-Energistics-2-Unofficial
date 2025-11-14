@@ -174,8 +174,8 @@ public class RenderCable {
         return false;
     }
 
-    private static boolean isCable(IPart iPart) {
-        return iPart instanceof PartCable;
+    private static boolean isCable(IPart part) {
+        return part instanceof PartCable;
     }
 
     private static boolean canConnectToGridHost(IGridHost gridHost, ForgeDirection side) {
