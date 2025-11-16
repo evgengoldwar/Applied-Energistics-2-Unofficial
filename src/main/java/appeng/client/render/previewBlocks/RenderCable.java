@@ -2,6 +2,9 @@ package appeng.client.render.previewBlocks;
 
 import static appeng.client.render.previewBlocks.ViewHelper.*;
 
+import appeng.me.helpers.AENetworkProxy;
+import appeng.tile.grid.AENetworkInvTile;
+import appeng.tile.grid.AENetworkPowerTile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
@@ -16,6 +19,9 @@ import appeng.api.parts.IPartHost;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
 import appeng.parts.networking.PartCable;
+
+import java.util.EnumSet;
+import java.util.function.Supplier;
 
 public class RenderCable {
 
@@ -134,21 +140,21 @@ public class RenderCable {
     }
 
     private static boolean shouldRenderConnection(ForgeDirection direction) {
-        TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(
+        TileEntity neighborTe = Minecraft.getMinecraft().theWorld.getTileEntity(
                 previewX + direction.offsetX,
                 previewY + direction.offsetY,
                 previewZ + direction.offsetZ);
 
-        if (te == null) {
+        if (neighborTe == null) {
             return false;
         }
 
-        if (te instanceof IPartHost) {
-            return hasConnectablePart((IPartHost) te, direction.getOpposite());
+        if (neighborTe instanceof IPartHost partHost) {
+            return hasConnectablePart(partHost, direction.getOpposite());
         }
 
-        if (te instanceof IGridHost) {
-            return canConnectToGridHost((IGridHost) te, direction.getOpposite());
+        if (neighborTe instanceof IGridHost gridHost) {
+            return canConnectToGridHost(gridHost, direction.getOpposite());
         }
 
         return false;
@@ -179,12 +185,21 @@ public class RenderCable {
     }
 
     private static boolean canConnectToGridHost(IGridHost gridHost, ForgeDirection side) {
-        try {
-            AECableType connectionType = gridHost.getCableConnectionType(side);
-            return connectionType != null && connectionType != AECableType.NONE;
-        } catch (Exception e) {
-            return false;
+        AECableType connectionType = gridHost.getCableConnectionType(side);
+        if (gridHost instanceof AENetworkInvTile aeNetworkInvTile) {
+            return hasConnectableSide(aeNetworkInvTile::getProxy, side);
         }
+
+        if (gridHost instanceof AENetworkPowerTile aeNetworkPowerTile) {
+            return hasConnectableSide(aeNetworkPowerTile::getProxy, side);
+        }
+        return connectionType != null && connectionType != AECableType.NONE;
+    }
+
+    private static boolean hasConnectableSide(Supplier<AENetworkProxy> proxySupplier, ForgeDirection side) {
+        EnumSet<ForgeDirection> connectableSides = proxySupplier.get().getConnectableSides();
+        if (connectableSides.isEmpty()) proxySupplier.get().onReady();
+        return !connectableSides.isEmpty() && connectableSides.contains(side);
     }
 
     private static boolean canConnectToPart(IPart part, ForgeDirection side) {

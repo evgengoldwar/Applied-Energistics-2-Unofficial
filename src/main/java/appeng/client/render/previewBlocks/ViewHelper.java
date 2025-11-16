@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import appeng.parts.p2p.PartP2PTunnel;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
@@ -49,6 +51,7 @@ public class ViewHelper {
     static {
         register(PartCable.class, ViewHelper::handleCable);
         register(AbstractPartDisplay.class, ViewHelper::handleTerminal);
+        register(PartP2PTunnel.class, ViewHelper::handleTerminal);
     }
 
     private static void register(Class<?> clazz, Consumer<ItemStack> action) {
@@ -141,15 +144,16 @@ public class ViewHelper {
             return;
         }
 
-        boolean isCable = isCableItem(cachedItemStack);
-        boolean isTerminal = isTerminalItem(cachedItemStack);
+        boolean isCable = isCableItem();
+        boolean isTerminal = isTerminalItem();
+        boolean isP2p  = isP2pItem();
 
         previewX = mop.blockX;
         previewY = mop.blockY;
         previewZ = mop.blockZ;
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
-        if (isTerminal) {
+        if (isTerminal || isP2p) {
             isValidPosition = RenderTerminal
                     .canPlacePartHost(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -164,12 +168,16 @@ public class ViewHelper {
         isActive = true;
     }
 
-    private static boolean isCableItem(ItemStack item) {
-        return getCachedPart(item).filter(PartCable.class::isInstance).isPresent();
+    private static boolean isCableItem() {
+        return getCachedPart(cachedItemStack).filter(PartCable.class::isInstance).isPresent();
     }
 
-    private static boolean isTerminalItem(ItemStack item) {
-        return getCachedPart(item).filter(AbstractPartDisplay.class::isInstance).isPresent();
+    private static boolean isTerminalItem() {
+        return getCachedPart(cachedItemStack).filter(AbstractPartDisplay.class::isInstance).isPresent();
+    }
+
+    private static boolean isP2pItem() {
+        return getCachedPart(cachedItemStack).filter(PartP2PTunnel.class::isInstance).isPresent();
     }
 
     public static void updatePartialTicks(float partialTicks) {
