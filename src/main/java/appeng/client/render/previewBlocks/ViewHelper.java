@@ -6,20 +6,15 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
-import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
 
-import appeng.api.implementations.parts.IPartCable;
-import appeng.api.parts.BusSupport;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
 import appeng.api.util.AECableType;
@@ -90,6 +85,20 @@ public class ViewHelper {
         return Optional.ofNullable(cachedPart);
     }
 
+    public static boolean hasParts(IPartHost partHost) {
+        if (partHost.getPart(ForgeDirection.UNKNOWN) != null) {
+            return true;
+        }
+
+        for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
+            if (partHost.getPart(dir) != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static boolean areItemStacksEqual(ItemStack stack1, ItemStack stack2) {
         if (stack1 == stack2) return true;
         if (stack1 == null || stack2 == null) return false;
@@ -141,7 +150,8 @@ public class ViewHelper {
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
         if (isTerminal) {
-            isValidPosition = RenderTerminal.canPlacePartHost(player.worldObj, placementSide, previewX, previewY, previewZ);
+            isValidPosition = RenderTerminal
+                    .canPlacePartHost(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
             previewX += placementSide.offsetX;
             previewY += placementSide.offsetY;

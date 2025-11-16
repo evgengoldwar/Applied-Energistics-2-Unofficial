@@ -2,11 +2,6 @@ package appeng.client.render.previewBlocks;
 
 import static appeng.client.render.previewBlocks.ViewHelper.*;
 
-import appeng.api.implementations.parts.IPartCable;
-import appeng.api.parts.BusSupport;
-import appeng.api.parts.IPart;
-import appeng.api.parts.IPartHost;
-import appeng.parts.networking.PartCable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
@@ -14,6 +9,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
+
+import appeng.api.implementations.parts.IPartCable;
+import appeng.api.parts.BusSupport;
+import appeng.api.parts.IPart;
+import appeng.api.parts.IPartHost;
+import appeng.parts.networking.PartCable;
 
 public class RenderTerminal {
 
@@ -144,20 +145,6 @@ public class RenderTerminal {
         return hasParts(partHost);
     }
 
-    public static boolean hasParts(IPartHost partHost) {
-        if (partHost.getPart(ForgeDirection.UNKNOWN) != null) {
-            return true;
-        }
-
-        for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
-            if (partHost.getPart(dir) != null) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public static boolean shouldPlaceOnNeighborBlock() {
         TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(previewX, previewY, previewZ);
 
@@ -177,10 +164,6 @@ public class RenderTerminal {
             return busSupport != BusSupport.CABLE;
         }
 
-        if (hasParts(partHost)) {
-            return false;
-        }
-
-        return true;
+        return !hasParts(partHost);
     }
 }
