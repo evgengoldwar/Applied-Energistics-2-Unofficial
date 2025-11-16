@@ -119,7 +119,7 @@ public final class QuantumBridgeWailaDataProvider extends BaseWailaDataProvider 
                         + "["
                         + EnumChatFormatting.WHITE
                         + WailaText.Id.getLocal()
-                        + ":"
+                        + ": "
                         + dimId
                         + yellow
                         + "]");
