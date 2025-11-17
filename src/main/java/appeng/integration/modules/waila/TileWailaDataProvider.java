@@ -12,7 +12,6 @@ package appeng.integration.modules.waila;
 
 import java.util.List;
 
-import appeng.tile.qnb.TileQuantumBridge;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -29,6 +28,7 @@ import appeng.integration.modules.waila.tile.InterfaceDataProvider;
 import appeng.integration.modules.waila.tile.PowerStateWailaDataProvider;
 import appeng.integration.modules.waila.tile.PowerStorageWailaDataProvider;
 import appeng.integration.modules.waila.tile.QuantumBridgeWailaDataProvider;
+import appeng.tile.qnb.TileQuantumBridge;
 import mcp.mobius.waila.api.IWailaConfigHandler;
 import mcp.mobius.waila.api.IWailaDataAccessor;
 import mcp.mobius.waila.api.IWailaDataProvider;
@@ -111,7 +111,8 @@ public final class TileWailaDataProvider implements IWailaDataProvider {
             provider.getNBTData(player, te, tag, world, x, y, z);
         }
         if (te instanceof ICustomNameObject customNameObject && customNameObject.hasCustomName()
-                && !customNameObject.getCustomName().isEmpty() && !(te instanceof TileQuantumBridge)) {
+                && !customNameObject.getCustomName().isEmpty()
+                && !(te instanceof TileQuantumBridge)) {
             tag.setString(NBT_TILE_CUSTOM_NAME, customNameObject.getCustomName());
         }
 

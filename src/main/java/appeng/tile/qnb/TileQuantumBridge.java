@@ -12,7 +12,6 @@ package appeng.tile.qnb;
 
 import java.util.EnumSet;
 
-import appeng.api.features.ILocatable;
 import net.minecraft.block.Block;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -24,6 +23,7 @@ import com.google.common.base.Optional;
 
 import appeng.api.AEApi;
 import appeng.api.definitions.IBlockDefinition;
+import appeng.api.features.ILocatable;
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.events.MENetworkEventSubscribe;
 import appeng.api.networking.events.MENetworkPowerStatusChange;
@@ -324,7 +324,8 @@ public class TileQuantumBridge extends AENetworkInvTile implements IAEMultiBlock
         if (sideAStack != null) {
             sideAStack.setStackDisplayName(name);
             if (cluster.getCenter() != null) {
-                final ILocatable myOtherSide = cluster.getOtherSide() == 0 ? null : AEApi.instance().registries().locatable().getLocatableBy(cluster.getOtherSide());
+                final ILocatable myOtherSide = cluster.getOtherSide() == 0 ? null
+                        : AEApi.instance().registries().locatable().getLocatableBy(cluster.getOtherSide());
                 if (myOtherSide instanceof QuantumCluster sideBCluster) {
                     ItemStack sideBStack = sideBCluster.getCenter().getStackInSlot(0);
                     if (sideBStack != null) {
