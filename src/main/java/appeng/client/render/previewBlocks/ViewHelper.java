@@ -6,13 +6,17 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import appeng.parts.p2p.PartP2PTunnel;
+import appeng.util.LookDirection;
+import appeng.util.Platform;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
@@ -24,6 +28,8 @@ import appeng.api.util.AEColor;
 import appeng.items.parts.ItemMultiPart;
 import appeng.parts.networking.PartCable;
 import appeng.parts.reporting.AbstractPartDisplay;
+
+import static appeng.util.Platform.getEyeOffset;
 
 public class ViewHelper {
 
@@ -137,7 +143,22 @@ public class ViewHelper {
     }
 
     public static void updatePreview(EntityPlayer player) {
-        MovingObjectPosition mop = getTargetedBlock(player, 6.0);
+        MovingObjectPosition mopBlock = getTargetedBlock(player, 6.0);
+
+        if (mopBlock == null || mopBlock.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+            isActive = false;
+            return;
+        }
+
+        final LookDirection dir = Platform.getPlayerRay(player, getEyeOffset(player));
+        Block block = player.worldObj.getBlock(mopBlock.blockX, mopBlock.blockY, mopBlock.blockZ);
+
+        if (block == null) {
+            isActive = false;
+            return;
+        }
+
+        final MovingObjectPosition mop = block.collisionRayTrace(player.worldObj, mopBlock.blockX, mopBlock.blockY, mopBlock.blockZ, dir.getA(), dir.getB());
 
         if (mop == null || mop.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             isActive = false;
@@ -201,10 +222,7 @@ public class ViewHelper {
     }
 
     private static MovingObjectPosition getTargetedBlock(EntityPlayer player, double reach) {
-        Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY + player.getEyeHeight(), player.posZ);
-        Vec3 lookVec = player.getLook(1.0F);
-        Vec3 targetPos = playerPos.addVector(lookVec.xCoord * reach, lookVec.yCoord * reach, lookVec.zCoord * reach);
-        return player.worldObj.rayTraceBlocks(playerPos, targetPos, true);
+        return Platform.rayTrace(player, true, false);
     }
 
     public static void renderWireframeCube(double minX, double minY, double minZ, double maxX, double maxY,
