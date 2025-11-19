@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import appeng.parts.automation.PartExportBus;
+import appeng.parts.automation.PartImportBus;
 import appeng.parts.misc.PartInterface;
 import appeng.parts.misc.PartStorageBus;
 import appeng.parts.networking.PartQuartzFiber;
@@ -73,6 +75,8 @@ public class ViewHelper {
         register(PartToggleBus.class, ViewHelper::handleToggleBus);
         register(PartQuartzFiber.class, ViewHelper::handleQuartzFiber);
         register(PartCableAnchor.class, ViewHelper::handleCableAnchor);
+        register(PartImportBus.class, ViewHelper::handleImportBus);
+        register(PartExportBus.class, ViewHelper::handleExportBus);
     }
 
     private static void register(Class<?> clazz, Consumer<ItemStack> action) {
@@ -162,6 +166,16 @@ public class ViewHelper {
         RenderQuartzFiber.renderQuartzFiberPreview();
     }
 
+    private static void handleImportBus(ItemStack item) {
+        if (!isActive) return;
+        RenderImportBus.renderImportBusPreview();
+    }
+
+    private static void handleExportBus(ItemStack item) {
+        if (!isActive) return;
+        RenderExportBus.renderExportBusPreview();
+    }
+
     public static AECableType getCableType(ItemStack itemStack) {
         return getCachedPart(itemStack).filter(PartCable.class::isInstance).map(PartCable.class::cast)
                 .map(PartCable::getCableConnectionType).orElse(AECableType.NONE);
@@ -206,13 +220,15 @@ public class ViewHelper {
         boolean isToggleBus = isToggleBusItem();
         boolean isCableAnchor = isCableAnchorItem();
         boolean isQuartzFiber = isQuartzFiberItem();
+        boolean isImportBus = isImportBusItem();
+        boolean isExportBus = isExportBusItem();
 
         previewX = mop.blockX;
         previewY = mop.blockY;
         previewZ = mop.blockZ;
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
-        if (isTerminal || isToggleBus || isCableAnchor || isQuartzFiber) {
+        if (isTerminal || isToggleBus || isCableAnchor || isQuartzFiber || isImportBus || isExportBus) {
             isValidPosition = RenderTerminal
                     .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -242,6 +258,14 @@ public class ViewHelper {
 
     private static boolean isQuartzFiberItem() {
         return getCachedPart(cachedItemStack).filter(PartQuartzFiber.class::isInstance).isPresent();
+    }
+
+    private static boolean isImportBusItem() {
+        return getCachedPart(cachedItemStack).filter(PartImportBus.class::isInstance).isPresent();
+    }
+
+    private static boolean isExportBusItem() {
+        return getCachedPart(cachedItemStack).filter(PartExportBus.class::isInstance).isPresent();
     }
 
     private static boolean isItemOfClasses(Class<?>... classes) {
