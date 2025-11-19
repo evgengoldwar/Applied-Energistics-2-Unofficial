@@ -5,7 +5,6 @@ import static appeng.client.render.previewBlocks.ViewHelper.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;

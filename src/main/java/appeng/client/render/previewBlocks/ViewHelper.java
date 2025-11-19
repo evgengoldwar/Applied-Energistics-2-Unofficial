@@ -7,14 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import appeng.parts.automation.PartExportBus;
-import appeng.parts.automation.PartImportBus;
-import appeng.parts.misc.PartInterface;
-import appeng.parts.misc.PartStorageBus;
-import appeng.parts.networking.PartQuartzFiber;
-import appeng.parts.reporting.PartDarkPanel;
-import appeng.parts.reporting.PartPanel;
-import appeng.parts.reporting.PartSemiDarkPanel;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
@@ -25,16 +17,30 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
 
+import com.glodblock.github.common.parts.PartFluidExportBus;
+import com.glodblock.github.common.parts.PartFluidImportBus;
+import com.glodblock.github.common.parts.PartFluidLevelEmitter;
+import com.glodblock.github.common.parts.PartFluidTerminal;
+
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
 import appeng.items.parts.ItemMultiPart;
+import appeng.parts.automation.PartExportBus;
+import appeng.parts.automation.PartImportBus;
+import appeng.parts.automation.PartLevelEmitter;
 import appeng.parts.misc.PartCableAnchor;
+import appeng.parts.misc.PartInterface;
+import appeng.parts.misc.PartStorageBus;
 import appeng.parts.misc.PartToggleBus;
 import appeng.parts.networking.PartCable;
+import appeng.parts.networking.PartQuartzFiber;
 import appeng.parts.p2p.PartP2PTunnel;
 import appeng.parts.reporting.AbstractPartDisplay;
+import appeng.parts.reporting.PartDarkPanel;
+import appeng.parts.reporting.PartPanel;
+import appeng.parts.reporting.PartSemiDarkPanel;
 import appeng.util.LookDirection;
 import appeng.util.Platform;
 
@@ -51,6 +57,8 @@ public class ViewHelper {
     public static ForgeDirection placementSide;
     public static World world;
     public static EntityPlayer player;
+
+    private static final boolean isAE2FCLoaded = Platform.isAE2FCLoaded;
 
     private static class ActionMapping {
 
@@ -77,6 +85,7 @@ public class ViewHelper {
         register(PartCableAnchor.class, ViewHelper::handleCableAnchor);
         register(PartImportBus.class, ViewHelper::handleImportBus);
         register(PartExportBus.class, ViewHelper::handleExportBus);
+        register(PartLevelEmitter.class, ViewHelper::handleLevelEmitter);
     }
 
     private static void register(Class<?> clazz, Consumer<ItemStack> action) {
@@ -176,6 +185,11 @@ public class ViewHelper {
         RenderExportBus.renderExportBusPreview();
     }
 
+    private static void handleLevelEmitter(ItemStack item) {
+        if (!isActive) return;
+        RenderLevelEmitter.renderLevelEmitterPreview();
+    }
+
     public static AECableType getCableType(ItemStack itemStack) {
         return getCachedPart(itemStack).filter(PartCable.class::isInstance).map(PartCable.class::cast)
                 .map(PartCable::getCableConnectionType).orElse(AECableType.NONE);
@@ -222,13 +236,19 @@ public class ViewHelper {
         boolean isQuartzFiber = isQuartzFiberItem();
         boolean isImportBus = isImportBusItem();
         boolean isExportBus = isExportBusItem();
+        boolean isLevelEmitter = isLevelEmitterItem();
 
         previewX = mop.blockX;
         previewY = mop.blockY;
         previewZ = mop.blockZ;
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
-        if (isTerminal || isToggleBus || isCableAnchor || isQuartzFiber || isImportBus || isExportBus) {
+        if (isTerminal || isToggleBus
+                || isCableAnchor
+                || isQuartzFiber
+                || isImportBus
+                || isExportBus
+                || isLevelEmitter) {
             isValidPosition = RenderTerminal
                     .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -245,7 +265,15 @@ public class ViewHelper {
     }
 
     private static boolean isTerminalItem() {
-        return isItemOfClasses(AbstractPartDisplay.class, PartP2PTunnel.class, PartPanel.class, PartDarkPanel.class, PartSemiDarkPanel.class, PartStorageBus.class, PartInterface.class);
+        return isItemOfClasses(
+                AbstractPartDisplay.class,
+                PartP2PTunnel.class,
+                PartPanel.class,
+                PartDarkPanel.class,
+                PartSemiDarkPanel.class,
+                PartStorageBus.class,
+                PartInterface.class,
+                isAE2FCLoaded ? PartFluidTerminal.class : null);
     }
 
     private static boolean isToggleBusItem() {
@@ -261,11 +289,15 @@ public class ViewHelper {
     }
 
     private static boolean isImportBusItem() {
-        return getCachedPart(cachedItemStack).filter(PartImportBus.class::isInstance).isPresent();
+        return isItemOfClasses(PartImportBus.class, isAE2FCLoaded ? PartFluidImportBus.class : null);
     }
 
     private static boolean isExportBusItem() {
-        return getCachedPart(cachedItemStack).filter(PartExportBus.class::isInstance).isPresent();
+        return isItemOfClasses(PartExportBus.class, isAE2FCLoaded ? PartFluidExportBus.class : null);
+    }
+
+    private static boolean isLevelEmitterItem() {
+        return isItemOfClasses(PartLevelEmitter.class, isAE2FCLoaded ? PartFluidLevelEmitter.class : null);
     }
 
     private static boolean isItemOfClasses(Class<?>... classes) {
