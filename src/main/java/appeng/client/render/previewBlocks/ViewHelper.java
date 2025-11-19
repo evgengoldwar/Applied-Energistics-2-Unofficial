@@ -1,22 +1,17 @@
 package appeng.client.render.previewBlocks;
 
+import static appeng.util.Platform.getEyeOffset;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import appeng.parts.p2p.PartP2PTunnel;
-import appeng.util.LookDirection;
-import appeng.util.Platform;
-import ibxm.Player;
 import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -27,10 +22,12 @@ import appeng.api.parts.IPartHost;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
 import appeng.items.parts.ItemMultiPart;
+import appeng.parts.misc.PartToggleBus;
 import appeng.parts.networking.PartCable;
+import appeng.parts.p2p.PartP2PTunnel;
 import appeng.parts.reporting.AbstractPartDisplay;
-
-import static appeng.util.Platform.getEyeOffset;
+import appeng.util.LookDirection;
+import appeng.util.Platform;
 
 public class ViewHelper {
 
@@ -61,6 +58,7 @@ public class ViewHelper {
         register(PartCable.class, ViewHelper::handleCable);
         register(AbstractPartDisplay.class, ViewHelper::handleTerminal);
         register(PartP2PTunnel.class, ViewHelper::handleTerminal);
+        register(PartToggleBus.class, ViewHelper::handleToggleBus);
     }
 
     private static void register(Class<?> clazz, Consumer<ItemStack> action) {
@@ -135,6 +133,11 @@ public class ViewHelper {
         RenderTerminal.renderTerminalPreview();
     }
 
+    private static void handleToggleBus(ItemStack item) {
+        if (!isActive) return;
+        RenderToggleBus.renderToggleBusPreview();
+    }
+
     public static AECableType getCableType(ItemStack itemStack) {
         return getCachedPart(itemStack).filter(PartCable.class::isInstance).map(PartCable.class::cast)
                 .map(PartCable::getCableConnectionType).orElse(AECableType.NONE);
@@ -161,7 +164,13 @@ public class ViewHelper {
             return;
         }
 
-        final MovingObjectPosition mop = block.collisionRayTrace(player.worldObj, mopBlock.blockX, mopBlock.blockY, mopBlock.blockZ, dir.getA(), dir.getB());
+        final MovingObjectPosition mop = block.collisionRayTrace(
+                player.worldObj,
+                mopBlock.blockX,
+                mopBlock.blockY,
+                mopBlock.blockZ,
+                dir.getA(),
+                dir.getB());
 
         if (mop == null || mop.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             isActive = false;
@@ -170,14 +179,15 @@ public class ViewHelper {
 
         boolean isCable = isCableItem();
         boolean isTerminal = isTerminalItem();
-        boolean isP2p  = isP2pItem();
+        boolean isP2p = isP2pItem();
+        boolean isToggleBus = isToggleBusItem();
 
         previewX = mop.blockX;
         previewY = mop.blockY;
         previewZ = mop.blockZ;
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
-        if (isTerminal || isP2p) {
+        if (isTerminal || isP2p || isToggleBus) {
             isValidPosition = RenderTerminal
                     .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -199,6 +209,10 @@ public class ViewHelper {
 
     private static boolean isP2pItem() {
         return getCachedPart(cachedItemStack).filter(PartP2PTunnel.class::isInstance).isPresent();
+    }
+
+    private static boolean isToggleBusItem() {
+        return getCachedPart(cachedItemStack).filter(PartToggleBus.class::isInstance).isPresent();
     }
 
     public static void updatePartialTicks(float partialTicks) {

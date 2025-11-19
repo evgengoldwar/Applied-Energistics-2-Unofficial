@@ -2,9 +2,9 @@ package appeng.client.render.previewBlocks;
 
 import static appeng.client.render.previewBlocks.ViewHelper.*;
 
-import appeng.me.helpers.AENetworkProxy;
-import appeng.tile.grid.AENetworkInvTile;
-import appeng.tile.grid.AENetworkPowerTile;
+import java.util.EnumSet;
+import java.util.function.Supplier;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
@@ -18,10 +18,10 @@ import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
+import appeng.me.helpers.AENetworkProxy;
 import appeng.parts.networking.PartCable;
-
-import java.util.EnumSet;
-import java.util.function.Supplier;
+import appeng.tile.grid.AENetworkInvTile;
+import appeng.tile.grid.AENetworkPowerTile;
 
 public class RenderCable {
 
@@ -99,8 +99,8 @@ public class RenderCable {
 
         if (te instanceof IGridHost gridHost) {
             setPreviewOffset();
-            return canConnectToGridHost(gridHost, placementSide.getOpposite()) ||
-                    canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
+            return canConnectToGridHost(gridHost, placementSide.getOpposite())
+                    || canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
         }
 
         return false;

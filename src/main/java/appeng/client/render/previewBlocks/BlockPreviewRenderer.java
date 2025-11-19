@@ -32,8 +32,16 @@ public class BlockPreviewRenderer {
         if (player == null) return;
 
         ItemStack heldItem = player.getHeldItem();
-        if (heldItem == null) return;
-        currentItem = heldItem;
+        if (heldItem == null) {
+            currentItem = null;
+            ViewHelper.clearCache();
+            return;
+        }
+
+        if (currentItem == null || !areItemStacksEqual(currentItem, heldItem)) {
+            currentItem = heldItem;
+            ViewHelper.clearCache();
+        }
 
         ViewHelper.setPlayer(player);
         ViewHelper.updatePreview(player);
@@ -41,7 +49,15 @@ public class BlockPreviewRenderer {
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
+        if (currentItem == null) return;
         ViewHelper.updatePartialTicks(event.partialTicks);
         ViewHelper.handleItem(currentItem);
+    }
+
+    private static boolean areItemStacksEqual(ItemStack stack1, ItemStack stack2) {
+        if (stack1 == stack2) return true;
+        if (stack1 == null || stack2 == null) return false;
+        return ItemStack.areItemStacksEqual(stack1, stack2) && ItemStack.areItemStackTagsEqual(stack1, stack2)
+                && stack1.stackSize == stack2.stackSize;
     }
 }
