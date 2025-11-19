@@ -22,6 +22,7 @@ import appeng.api.parts.IPartHost;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
 import appeng.items.parts.ItemMultiPart;
+import appeng.parts.misc.PartCableAnchor;
 import appeng.parts.misc.PartToggleBus;
 import appeng.parts.networking.PartCable;
 import appeng.parts.p2p.PartP2PTunnel;
@@ -59,6 +60,7 @@ public class ViewHelper {
         register(AbstractPartDisplay.class, ViewHelper::handleTerminal);
         register(PartP2PTunnel.class, ViewHelper::handleTerminal);
         register(PartToggleBus.class, ViewHelper::handleToggleBus);
+        register(PartCableAnchor.class, ViewHelper::handleCableAnchor);
     }
 
     private static void register(Class<?> clazz, Consumer<ItemStack> action) {
@@ -138,6 +140,11 @@ public class ViewHelper {
         RenderToggleBus.renderToggleBusPreview();
     }
 
+    private static void handleCableAnchor(ItemStack item) {
+        if (!isActive) return;
+        RenderCableAnchor.renderCableAnchorPreview();
+    }
+
     public static AECableType getCableType(ItemStack itemStack) {
         return getCachedPart(itemStack).filter(PartCable.class::isInstance).map(PartCable.class::cast)
                 .map(PartCable::getCableConnectionType).orElse(AECableType.NONE);
@@ -181,13 +188,14 @@ public class ViewHelper {
         boolean isTerminal = isTerminalItem();
         boolean isP2p = isP2pItem();
         boolean isToggleBus = isToggleBusItem();
+        boolean isCableAnchor = isCableAnchorItem();
 
         previewX = mop.blockX;
         previewY = mop.blockY;
         previewZ = mop.blockZ;
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
-        if (isTerminal || isP2p || isToggleBus) {
+        if (isTerminal || isP2p || isToggleBus || isCableAnchor) {
             isValidPosition = RenderTerminal
                     .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -213,6 +221,10 @@ public class ViewHelper {
 
     private static boolean isToggleBusItem() {
         return getCachedPart(cachedItemStack).filter(PartToggleBus.class::isInstance).isPresent();
+    }
+
+    private static boolean isCableAnchorItem() {
+        return getCachedPart(cachedItemStack).filter(PartCableAnchor.class::isInstance).isPresent();
     }
 
     public static void updatePartialTicks(float partialTicks) {
