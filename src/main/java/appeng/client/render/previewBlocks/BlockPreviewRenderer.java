@@ -35,6 +35,7 @@ public class BlockPreviewRenderer {
         if (heldItem == null) return;
         currentItem = heldItem;
 
+        ViewHelper.setPlayer(player);
         ViewHelper.updatePreview(player);
     }
 

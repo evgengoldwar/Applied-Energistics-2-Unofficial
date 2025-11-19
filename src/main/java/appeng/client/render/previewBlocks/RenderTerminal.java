@@ -108,7 +108,7 @@ public class RenderTerminal {
         ViewHelper.renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    public static boolean canPlacePartHost(World world, ForgeDirection side, int x, int y, int z) {
+    public static boolean canPlaceParts(World world, ForgeDirection side, int x, int y, int z) {
         int neighborX = x + side.offsetX;
         int neighborY = y + side.offsetY;
         int neighborZ = z + side.offsetZ;
@@ -146,7 +146,7 @@ public class RenderTerminal {
     }
 
     public static boolean shouldPlaceOnNeighborBlock() {
-        TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(previewX, previewY, previewZ);
+        TileEntity te = getWorld().getTileEntity(previewX, previewY, previewZ);
 
         if (!(te instanceof IPartHost partHost)) {
             return true;

@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import appeng.parts.p2p.PartP2PTunnel;
 import appeng.util.LookDirection;
 import appeng.util.Platform;
+import ibxm.Player;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
@@ -34,7 +35,7 @@ import static appeng.util.Platform.getEyeOffset;
 public class ViewHelper {
 
     private static final List<ActionMapping> ACTION_MAPPINGS = new ArrayList<>();
-    private static ItemStack cachedItemStack = null;
+    public static ItemStack cachedItemStack = null;
     private static IPart cachedPart = null;
     public static int previewX, previewY, previewZ;
     private static boolean isValidPosition;
@@ -42,6 +43,8 @@ public class ViewHelper {
     public static float currentPartialTicks;
     public static AEColor currentColor;
     public static ForgeDirection placementSide;
+    public static World world;
+    public static EntityPlayer player;
 
     private static class ActionMapping {
 
@@ -132,7 +135,7 @@ public class ViewHelper {
         RenderTerminal.renderTerminalPreview();
     }
 
-    private static AECableType getCableType(ItemStack itemStack) {
+    public static AECableType getCableType(ItemStack itemStack) {
         return getCachedPart(itemStack).filter(PartCable.class::isInstance).map(PartCable.class::cast)
                 .map(PartCable::getCableConnectionType).orElse(AECableType.NONE);
     }
@@ -176,12 +179,9 @@ public class ViewHelper {
 
         if (isTerminal || isP2p) {
             isValidPosition = RenderTerminal
-                    .canPlacePartHost(player.worldObj, placementSide, previewX, previewY, previewZ);
+                    .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
-            previewX += placementSide.offsetX;
-            previewY += placementSide.offsetY;
-            previewZ += placementSide.offsetZ;
-            isValidPosition = canPlaceBlockAt(player.worldObj, previewX, previewY, previewZ);
+            isValidPosition = RenderCable.canPlaceCable();
         } else {
             isValidPosition = false;
         }
@@ -219,6 +219,12 @@ public class ViewHelper {
         } else {
             GL11.glColor4f(1.0f, 0.0f, 0.0f, 0.6f);
         }
+    }
+
+    public static void setPreviewOffset() {
+        previewX += placementSide.offsetX;
+        previewY += placementSide.offsetY;
+        previewZ += placementSide.offsetZ;
     }
 
     private static MovingObjectPosition getTargetedBlock(EntityPlayer player, double reach) {
@@ -269,5 +275,17 @@ public class ViewHelper {
         tessellator.addVertex(minX, maxY, maxZ);
 
         tessellator.draw();
+    }
+
+    public static World getWorld() {
+        return player.worldObj;
+    }
+
+    public static EntityPlayer getPlayer() {
+        return player;
+    }
+
+    public static void setPlayer(EntityPlayer player) {
+        ViewHelper.player = player;
     }
 }
