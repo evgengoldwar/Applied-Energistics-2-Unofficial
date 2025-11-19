@@ -38,13 +38,7 @@ public class RenderCable {
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDepthMask(false);
-
+        setupRenderState();
         ViewHelper.getValidColorGL11();
 
         if (isDense) {
@@ -55,58 +49,43 @@ public class RenderCable {
             renderCableConnections();
         }
 
+        restoreRenderState();
+        GL11.glPopMatrix();
+    }
+
+    private static void setupRenderState() {
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glDepthMask(false);
+    }
+
+    private static void restoreRenderState() {
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_BLEND);
-        GL11.glPopMatrix();
     }
 
     public static boolean canPlaceCable() {
         AECableType cableType = getCableType(cachedItemStack);
-        boolean isDense = false;
-        if (cableType != null) {
-            isDense = cableType == AECableType.DENSE || cableType == AECableType.DENSE_COVERED;
-        }
-        TileEntity te = getWorld().getTileEntity(
-                previewX,
-                previewY,
-                previewZ);
+        boolean isDense = cableType != null && isDenseCable(cableType);
+
+        TileEntity te = getWorld().getTileEntity(previewX, previewY, previewZ);
         TileEntity neighborTe = getWorld().getTileEntity(
                 previewX + placementSide.offsetX,
                 previewY + placementSide.offsetY,
                 previewZ + placementSide.offsetZ);
 
         if (te == null) {
-            setPreviewOffset();
-            if (neighborTe != null) {
-                if (neighborTe instanceof IPartHost partHost) {
-                    IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-                    if (isDense) return false;
-                    if (centerPart == null) return true;
-                }
-            }
-            return canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
+            return handleNullTileEntity(isDense, neighborTe);
         }
 
         if (te instanceof IPartHost partHost) {
-            IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-            if (centerPart != null) {
-                setPreviewOffset();
-            } else if (isDense) {
-                setPreviewOffset();
-            } else return true;
-            if (neighborTe != null) {
-                if (neighborTe instanceof IPartHost partHostNeighbor) {
-                    IPart centerPartNeighbor = partHostNeighbor.getPart(ForgeDirection.UNKNOWN);
-                    if (isDense) return false;
-                    return centerPartNeighbor == null;
-                }
-            } else {
-                return canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
-            }
-            return false;
+            return handlePartHost(partHost, isDense, neighborTe);
         }
 
         if (neighborTe instanceof IPartHost partHost) {
@@ -117,12 +96,44 @@ public class RenderCable {
             }
             return true;
         }
+
         if (te instanceof IGridHost gridHost) {
             setPreviewOffset();
-            return canConnectToGridHost(gridHost, placementSide.getOpposite()) || canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
+            return canConnectToGridHost(gridHost, placementSide.getOpposite()) ||
+                    canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
         }
 
         return false;
+    }
+
+    private static boolean handleNullTileEntity(boolean isDense, TileEntity neighborTe) {
+        setPreviewOffset();
+        if (neighborTe instanceof IPartHost partHost) {
+            IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+            if (isDense) return false;
+            return centerPart == null;
+        }
+        return canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
+    }
+
+    private static boolean handlePartHost(IPartHost partHost, boolean isDense, TileEntity neighborTe) {
+        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+
+        if (centerPart != null) {
+            setPreviewOffset();
+        } else if (isDense) {
+            setPreviewOffset();
+        } else {
+            return true;
+        }
+
+        if (neighborTe instanceof IPartHost partHostNeighbor) {
+            IPart centerPartNeighbor = partHostNeighbor.getPart(ForgeDirection.UNKNOWN);
+            if (isDense) return false;
+            return centerPartNeighbor == null;
+        } else {
+            return canPlaceBlockAt(getWorld(), previewX, previewY, previewZ);
+        }
     }
 
     // region Cable
@@ -135,19 +146,17 @@ public class RenderCable {
     }
 
     private static boolean shouldRenderConnection(ForgeDirection direction) {
+        TileEntity te = getWorld().getTileEntity(previewX, previewY, previewZ);
         TileEntity neighborTe = getWorld().getTileEntity(
                 previewX + direction.offsetX,
                 previewY + direction.offsetY,
                 previewZ + direction.offsetZ);
-        TileEntity te = getWorld().getTileEntity(previewX,previewY,previewZ);
 
-        if (te != null) {
-            if (te instanceof IPartHost partHost) {
-                IPart part = partHost.getPart(direction);
-                if (part != null) {
-                    isShortest = true;
-                    return true;
-                }
+        if (te instanceof IPartHost partHost) {
+            IPart part = partHost.getPart(direction);
+            if (part != null) {
+                isShortest = true;
+                return true;
             }
         }
 
@@ -171,59 +180,58 @@ public class RenderCable {
     private static boolean hasConnectablePart(IPartHost partHost, ForgeDirection side) {
         IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
         IPart partSide = partHost.getPart(side);
+
         if (canConnectToPart(centerPart, side) && partSide == null) {
             return true;
         }
 
-        for (ForgeDirection sides : ForgeDirection.VALID_DIRECTIONS) {
-            IPart part = partHost.getPart(sides);
+        for (ForgeDirection direction : ForgeDirection.VALID_DIRECTIONS) {
+            IPart part = partHost.getPart(direction);
             if (canConnectToPart(part, side) && partSide == null) {
                 return true;
             }
         }
-
-//        if (partHost instanceof IGridHost gridHost) {
-//            return canConnectToGridHost(gridHost, side) && !(centerPart instanceof  PartCable);
-//        }
 
         return false;
     }
 
     private static boolean canConnectToGridHost(IGridHost gridHost, ForgeDirection side) {
         AECableType connectionType = gridHost.getCableConnectionType(side);
-        if (gridHost instanceof AENetworkInvTile aeNetworkInvTile) {
-            return hasConnectableSide(aeNetworkInvTile::getProxy, side);
+
+        if (gridHost instanceof AENetworkInvTile) {
+            return hasConnectableSide(((AENetworkInvTile) gridHost)::getProxy, side);
         }
 
-        if (gridHost instanceof AENetworkPowerTile aeNetworkPowerTile) {
-            return hasConnectableSide(aeNetworkPowerTile::getProxy, side);
+        if (gridHost instanceof AENetworkPowerTile) {
+            return hasConnectableSide(((AENetworkPowerTile) gridHost)::getProxy, side);
         }
+
         return connectionType != null && connectionType != AECableType.NONE;
     }
 
     private static boolean hasConnectableSide(Supplier<AENetworkProxy> proxySupplier, ForgeDirection side) {
         EnumSet<ForgeDirection> connectableSides = proxySupplier.get().getConnectableSides();
-        if (connectableSides.isEmpty()) proxySupplier.get().onReady();
+        if (connectableSides.isEmpty()) {
+            proxySupplier.get().onReady();
+        }
         return !connectableSides.isEmpty() && connectableSides.contains(side);
     }
 
     private static boolean canConnectToPart(IPart part, ForgeDirection side) {
-        if (part instanceof IPartCable) {
-            AEColor color = ((IPartCable) part).getCableColor();
-            return isColorCapabilities(color, currentColor);
+        if (part instanceof IPartCable cable) {
+            AEColor color = cable.getCableColor();
+            return isColorCompatible(color, currentColor);
         }
         return false;
     }
 
-    private static boolean isColorCapabilities(AEColor color1, AEColor color2) {
+    private static boolean isColorCompatible(AEColor color1, AEColor color2) {
         if (color1 == AEColor.Transparent || color2 == AEColor.Transparent) return true;
         return color1.matches(color2);
     }
-
     // endregion
 
     // region Dense cable
-
     public static boolean isDenseCable(AECableType type) {
         return type == AECableType.DENSE || type == AECableType.DENSE_COVERED;
     }
@@ -252,35 +260,36 @@ public class RenderCable {
         }
 
         if (te instanceof IPartHost partHost) {
-            IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-            if (centerPart instanceof IGridHost gridHost) {
-                AECableType connectionType = gridHost.getCableConnectionType(direction.getOpposite());
-                if (connectionType == null) return AECableType.NONE;
-                if (gridHost instanceof PartCable cable) {
-                    AEColor color = cable.getCableColor();
-                    if (isColorCapabilities(color, currentColor)) {
-                        return connectionType;
-                    }
-                }
-            }
-
-            for (ForgeDirection partSide : ForgeDirection.VALID_DIRECTIONS) {
-                IPart part = partHost.getPart(partSide);
-                if (part instanceof IGridHost gridHost) {
-                    AECableType connectionType = gridHost.getCableConnectionType(direction.getOpposite());
-                    if (connectionType != null && connectionType != AECableType.NONE) {
-                        return connectionType;
-                    }
-                }
-            }
-
-            return AECableType.NONE;
+            return getCableTypeFromPartHost(partHost, direction);
         }
 
         if (te instanceof IGridHost gridHost) {
             AECableType connectionType = gridHost.getCableConnectionType(direction.getOpposite());
-            if (connectionType != null && connectionType != AECableType.NONE) {
-                return connectionType;
+            return (connectionType != null && connectionType != AECableType.NONE) ? connectionType : AECableType.NONE;
+        }
+
+        return AECableType.NONE;
+    }
+
+    private static AECableType getCableTypeFromPartHost(IPartHost partHost, ForgeDirection direction) {
+        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+        if (centerPart instanceof IGridHost gridHost) {
+            AECableType connectionType = gridHost.getCableConnectionType(direction.getOpposite());
+            if (connectionType != null && gridHost instanceof PartCable cable) {
+                AEColor color = cable.getCableColor();
+                if (isColorCompatible(color, currentColor)) {
+                    return connectionType;
+                }
+            }
+        }
+
+        for (ForgeDirection partSide : ForgeDirection.VALID_DIRECTIONS) {
+            IPart part = partHost.getPart(partSide);
+            if (part instanceof IGridHost gridHost) {
+                AECableType connectionType = gridHost.getCableConnectionType(direction.getOpposite());
+                if (connectionType != null && connectionType != AECableType.NONE) {
+                    return connectionType;
+                }
             }
         }
 
@@ -290,12 +299,15 @@ public class RenderCable {
 
     // region render
     private static void renderCableCore(double size) {
-        double minX = previewX + (6.0 - size) / 16.0;
-        double minY = previewY + (6.0 - size) / 16.0;
-        double minZ = previewZ + (6.0 - size) / 16.0;
-        double maxX = previewX + (10.0 + size) / 16.0;
-        double maxY = previewY + (10.0 + size) / 16.0;
-        double maxZ = previewZ + (10.0 + size) / 16.0;
+        double min = (6.0 - size) / 16.0;
+        double max = (10.0 + size) / 16.0;
+
+        double minX = previewX + min;
+        double minY = previewY + min;
+        double minZ = previewZ + min;
+        double maxX = previewX + max;
+        double maxY = previewY + max;
+        double maxZ = previewZ + max;
 
         renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
