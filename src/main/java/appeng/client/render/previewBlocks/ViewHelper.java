@@ -7,6 +7,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import appeng.api.parts.IPartItem;
+import appeng.parts.automation.PartAnnihilationPlane;
+import appeng.parts.automation.PartFormationPlane;
+import appeng.parts.automation.PartIdentityAnnihilationPlane;
+import com.glodblock.github.common.parts.PartFluidInterface;
+import com.glodblock.github.common.parts.PartFluidPatternTerminal;
+import com.glodblock.github.common.parts.PartFluidPatternTerminalEx;
+import com.glodblock.github.common.parts.PartFluidStorageBus;
+import com.glodblock.github.common.parts.PartLevelTerminal;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
@@ -58,8 +67,6 @@ public class ViewHelper {
     public static World world;
     public static EntityPlayer player;
 
-    private static final boolean isAE2FCLoaded = Platform.isAE2FCLoaded;
-
     private static class ActionMapping {
 
         private final Class<?> targetClass;
@@ -74,22 +81,35 @@ public class ViewHelper {
     static {
         register(PartCable.class, ViewHelper::handleCable);
         register(AbstractPartDisplay.class, ViewHelper::handleTerminal);
+        register(PartFluidTerminal.class, ViewHelper::handleTerminal);
         register(PartP2PTunnel.class, ViewHelper::handleTerminal);
         register(PartPanel.class, ViewHelper::handleTerminal);
         register(PartSemiDarkPanel.class, ViewHelper::handleTerminal);
         register(PartDarkPanel.class, ViewHelper::handleTerminal);
         register(PartStorageBus.class, ViewHelper::handleTerminal);
+        register(PartFluidStorageBus.class, ViewHelper::handleTerminal);
         register(PartInterface.class, ViewHelper::handleTerminal);
+        register(PartFluidInterface.class, ViewHelper::handleTerminal);
         register(PartToggleBus.class, ViewHelper::handleToggleBus);
         register(PartQuartzFiber.class, ViewHelper::handleQuartzFiber);
         register(PartCableAnchor.class, ViewHelper::handleCableAnchor);
         register(PartImportBus.class, ViewHelper::handleImportBus);
         register(PartExportBus.class, ViewHelper::handleExportBus);
+        register(PartFluidImportBus.class, ViewHelper::handleImportBus);
+        register(PartFluidExportBus.class, ViewHelper::handleExportBus);
+        register(PartFluidLevelEmitter.class, ViewHelper::handleLevelEmitter);
         register(PartLevelEmitter.class, ViewHelper::handleLevelEmitter);
+        register(PartAnnihilationPlane.class, ViewHelper::handleAnnihilationPlane);
+        register(PartFormationPlane.class, ViewHelper::handleAnnihilationPlane);
+        register(PartFluidPatternTerminal.class, ViewHelper::handleTerminal);
+        register(PartFluidPatternTerminalEx.class, ViewHelper::handleTerminal);
+        register(PartLevelTerminal.class, ViewHelper::handleTerminal);
     }
 
     private static void register(Class<?> clazz, Consumer<ItemStack> action) {
-        ACTION_MAPPINGS.add(new ActionMapping(clazz, action));
+        try {
+            ACTION_MAPPINGS.add(new ActionMapping(clazz, action));
+        } catch (NoClassDefFoundError | Exception ignored) {}
     }
 
     public static void handleItem(ItemStack heldItem) {
@@ -103,7 +123,7 @@ public class ViewHelper {
     }
 
     private static Optional<IPart> getCachedPart(ItemStack item) {
-        if (item == null || !(item.getItem() instanceof ItemMultiPart itemMultiPart)) {
+        if (item == null || !(item.getItem() instanceof IPartItem iPartItem)) {
             clearCache();
             return Optional.empty();
         }
@@ -114,7 +134,7 @@ public class ViewHelper {
 
         cachedItemStack = item.copy();
         try {
-            cachedPart = itemMultiPart.createPartFromItemStack(item);
+            cachedPart = iPartItem.createPartFromItemStack(item);
         } catch (Exception e) {
             clearCache();
         }
@@ -190,6 +210,11 @@ public class ViewHelper {
         RenderLevelEmitter.renderLevelEmitterPreview();
     }
 
+    private static void handleAnnihilationPlane(ItemStack item) {
+        if (!isActive) return;
+        RenderAnnihilationPlane.renderAnnihilationPlanePreview();
+    }
+
     public static AECableType getCableType(ItemStack itemStack) {
         return getCachedPart(itemStack).filter(PartCable.class::isInstance).map(PartCable.class::cast)
                 .map(PartCable::getCableConnectionType).orElse(AECableType.NONE);
@@ -201,7 +226,7 @@ public class ViewHelper {
     }
 
     public static void updatePreview(EntityPlayer player) {
-        MovingObjectPosition mopBlock = getTargetedBlock(player, 6.0);
+        MovingObjectPosition mopBlock = getTargetedBlock(player);
 
         if (mopBlock == null || mopBlock.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             isActive = false;
@@ -237,6 +262,7 @@ public class ViewHelper {
         boolean isImportBus = isImportBusItem();
         boolean isExportBus = isExportBusItem();
         boolean isLevelEmitter = isLevelEmitterItem();
+        boolean isAnnihilationPlane = isAnnihilationPlaneItem();
 
         previewX = mop.blockX;
         previewY = mop.blockY;
@@ -248,7 +274,8 @@ public class ViewHelper {
                 || isQuartzFiber
                 || isImportBus
                 || isExportBus
-                || isLevelEmitter) {
+                || isLevelEmitter
+                || isAnnihilationPlane) {
             isValidPosition = RenderTerminal
                     .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -273,7 +300,11 @@ public class ViewHelper {
                 PartSemiDarkPanel.class,
                 PartStorageBus.class,
                 PartInterface.class,
-                isAE2FCLoaded ? PartFluidTerminal.class : null);
+                PartFluidTerminal.class,
+                PartFluidStorageBus.class,
+                PartFluidPatternTerminalEx.class,
+                PartFluidPatternTerminal.class,
+                PartLevelTerminal.class);
     }
 
     private static boolean isToggleBusItem() {
@@ -289,18 +320,23 @@ public class ViewHelper {
     }
 
     private static boolean isImportBusItem() {
-        return isItemOfClasses(PartImportBus.class, isAE2FCLoaded ? PartFluidImportBus.class : null);
+        return isItemOfClasses(PartImportBus.class, PartFluidImportBus.class);
     }
 
     private static boolean isExportBusItem() {
-        return isItemOfClasses(PartExportBus.class, isAE2FCLoaded ? PartFluidExportBus.class : null);
+        return isItemOfClasses(PartExportBus.class, PartFluidExportBus.class);
     }
 
     private static boolean isLevelEmitterItem() {
-        return isItemOfClasses(PartLevelEmitter.class, isAE2FCLoaded ? PartFluidLevelEmitter.class : null);
+        return isItemOfClasses(PartLevelEmitter.class, PartFluidLevelEmitter.class);
+    }
+
+    private static boolean isAnnihilationPlaneItem() {
+        return isItemOfClasses(PartFormationPlane.class, PartAnnihilationPlane.class);
     }
 
     private static boolean isItemOfClasses(Class<?>... classes) {
+
         Optional<IPart> cachedPart = getCachedPart(cachedItemStack);
         if (!cachedPart.isPresent()) {
             return false;
@@ -308,9 +344,11 @@ public class ViewHelper {
 
         IPart part = cachedPart.get();
         for (Class<?> clazz : classes) {
-            if (clazz.isInstance(part)) {
-                return true;
-            }
+            try {
+                if (clazz.isInstance(part)) {
+                    return true;
+                }
+            } catch (NoClassDefFoundError | Exception ignored) {}
         }
         return false;
     }
@@ -341,7 +379,7 @@ public class ViewHelper {
         previewZ += placementSide.offsetZ;
     }
 
-    private static MovingObjectPosition getTargetedBlock(EntityPlayer player, double reach) {
+    private static MovingObjectPosition getTargetedBlock(EntityPlayer player) {
         return Platform.rayTrace(player, true, false);
     }
 
