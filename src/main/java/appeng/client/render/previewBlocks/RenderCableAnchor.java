@@ -48,7 +48,6 @@ public class RenderCableAnchor {
         }
 
         renderCableAnchorBase();
-        renderCableAnchorRod();
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -85,25 +84,13 @@ public class RenderCableAnchor {
     }
 
     private static void renderCableAnchorBase() {
-        // Основная часть якоря (ближе к кабелю)
+        // Увеличенная основная часть якоря (занимает весь объем)
         double minX = 7.0 / 16.0;
         double minY = 7.0 / 16.0;
         double minZ = 10.0 / 16.0;
         double maxX = 9.0 / 16.0;
         double maxY = 9.0 / 16.0;
         double maxZ = 16.0 / 16.0;
-
-        ViewHelper.renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private static void renderCableAnchorRod() {
-        // Стержень якоря (выступающая часть)
-        double minX = 7.0 / 16.0;
-        double minY = 7.0 / 16.0;
-        double minZ = 10.0 / 16.0;
-        double maxX = 9.0 / 16.0;
-        double maxY = 9.0 / 16.0;
-        double maxZ = 14.0 / 16.0;
 
         ViewHelper.renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
