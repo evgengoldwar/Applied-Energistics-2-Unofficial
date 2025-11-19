@@ -7,7 +7,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import appeng.parts.misc.PartInterface;
+import appeng.parts.misc.PartStorageBus;
 import appeng.parts.networking.PartQuartzFiber;
+import appeng.parts.reporting.PartDarkPanel;
+import appeng.parts.reporting.PartPanel;
+import appeng.parts.reporting.PartSemiDarkPanel;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
@@ -60,6 +65,11 @@ public class ViewHelper {
         register(PartCable.class, ViewHelper::handleCable);
         register(AbstractPartDisplay.class, ViewHelper::handleTerminal);
         register(PartP2PTunnel.class, ViewHelper::handleTerminal);
+        register(PartPanel.class, ViewHelper::handleTerminal);
+        register(PartSemiDarkPanel.class, ViewHelper::handleTerminal);
+        register(PartDarkPanel.class, ViewHelper::handleTerminal);
+        register(PartStorageBus.class, ViewHelper::handleTerminal);
+        register(PartInterface.class, ViewHelper::handleTerminal);
         register(PartToggleBus.class, ViewHelper::handleToggleBus);
         register(PartQuartzFiber.class, ViewHelper::handleQuartzFiber);
         register(PartCableAnchor.class, ViewHelper::handleCableAnchor);
@@ -193,7 +203,6 @@ public class ViewHelper {
 
         boolean isCable = isCableItem();
         boolean isTerminal = isTerminalItem();
-        boolean isP2p = isP2pItem();
         boolean isToggleBus = isToggleBusItem();
         boolean isCableAnchor = isCableAnchorItem();
         boolean isQuartzFiber = isQuartzFiberItem();
@@ -203,7 +212,7 @@ public class ViewHelper {
         previewZ = mop.blockZ;
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
-        if (isTerminal || isP2p || isToggleBus || isCableAnchor || isQuartzFiber) {
+        if (isTerminal || isToggleBus || isCableAnchor || isQuartzFiber) {
             isValidPosition = RenderTerminal
                     .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -220,11 +229,7 @@ public class ViewHelper {
     }
 
     private static boolean isTerminalItem() {
-        return getCachedPart(cachedItemStack).filter(AbstractPartDisplay.class::isInstance).isPresent();
-    }
-
-    private static boolean isP2pItem() {
-        return getCachedPart(cachedItemStack).filter(PartP2PTunnel.class::isInstance).isPresent();
+        return isItemOfClasses(AbstractPartDisplay.class, PartP2PTunnel.class, PartPanel.class, PartDarkPanel.class, PartSemiDarkPanel.class, PartStorageBus.class, PartInterface.class);
     }
 
     private static boolean isToggleBusItem() {
@@ -237,6 +242,21 @@ public class ViewHelper {
 
     private static boolean isQuartzFiberItem() {
         return getCachedPart(cachedItemStack).filter(PartQuartzFiber.class::isInstance).isPresent();
+    }
+
+    private static boolean isItemOfClasses(Class<?>... classes) {
+        Optional<IPart> cachedPart = getCachedPart(cachedItemStack);
+        if (!cachedPart.isPresent()) {
+            return false;
+        }
+
+        IPart part = cachedPart.get();
+        for (Class<?> clazz : classes) {
+            if (clazz.isInstance(part)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void updatePartialTicks(float partialTicks) {
