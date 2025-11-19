@@ -3,6 +3,7 @@ package appeng.client.render.previewBlocks;
 import static appeng.client.render.previewBlocks.ViewHelper.*;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -14,9 +15,9 @@ import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
 import appeng.parts.networking.PartCable;
 
-public class RenderCableAnchor {
+public class RenderQuartzFiber {
 
-    public static void renderCableAnchorPreview() {
+    public static void renderQuartzFiberPreview() {
         EntityPlayer player = Minecraft.getMinecraft().thePlayer;
         if (player == null) return;
 
@@ -39,15 +40,15 @@ public class RenderCableAnchor {
         boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
 
         if (shouldPlaceOnNeighborBlock) {
-            int anchorX = previewX + placementSide.offsetX;
-            int anchorY = previewY + placementSide.offsetY;
-            int anchorZ = previewZ + placementSide.offsetZ;
-            applySideRotation(anchorX, anchorY, anchorZ, placementSide.getOpposite());
+            int fiberX = previewX + placementSide.offsetX;
+            int fiberY = previewY + placementSide.offsetY;
+            int fiberZ = previewZ + placementSide.offsetZ;
+            applySideRotation(fiberX, fiberY, fiberZ, placementSide.getOpposite());
         } else {
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderCableAnchorBase();
+        renderQuartzFiberSolid();
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -83,15 +84,58 @@ public class RenderCableAnchor {
         GL11.glTranslated(-0.5, -0.5, -0.5);
     }
 
-    private static void renderCableAnchorBase() {
-        double minX = 7.0 / 16.0;
-        double minY = 7.0 / 16.0;
+    private static void renderQuartzFiberSolid() {
+        double minX = 6.0 / 16.0;
+        double minY = 6.0 / 16.0;
         double minZ = 10.0 / 16.0;
-        double maxX = 9.0 / 16.0;
-        double maxY = 9.0 / 16.0;
+        double maxX = 10.0 / 16.0;
+        double maxY = 10.0 / 16.0;
         double maxZ = 16.0 / 16.0;
 
-        ViewHelper.renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
+        renderSolidCube(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    private static void renderSolidCube(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        Tessellator tessellator = Tessellator.instance;
+
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
+        GL11.glLineWidth(2.0f);
+
+        tessellator.startDrawing(GL11.GL_QUADS);
+
+        tessellator.addVertex(minX, minY, minZ);
+        tessellator.addVertex(maxX, minY, minZ);
+        tessellator.addVertex(maxX, minY, maxZ);
+        tessellator.addVertex(minX, minY, maxZ);
+
+        tessellator.addVertex(minX, maxY, minZ);
+        tessellator.addVertex(minX, maxY, maxZ);
+        tessellator.addVertex(maxX, maxY, maxZ);
+        tessellator.addVertex(maxX, maxY, minZ);
+
+        tessellator.addVertex(minX, minY, minZ);
+        tessellator.addVertex(minX, maxY, minZ);
+        tessellator.addVertex(maxX, maxY, minZ);
+        tessellator.addVertex(maxX, minY, minZ);
+
+        tessellator.addVertex(minX, minY, maxZ);
+        tessellator.addVertex(maxX, minY, maxZ);
+        tessellator.addVertex(maxX, maxY, maxZ);
+        tessellator.addVertex(minX, maxY, maxZ);
+
+        tessellator.addVertex(minX, minY, minZ);
+        tessellator.addVertex(minX, minY, maxZ);
+        tessellator.addVertex(minX, maxY, maxZ);
+        tessellator.addVertex(minX, maxY, minZ);
+
+        tessellator.addVertex(maxX, minY, minZ);
+        tessellator.addVertex(maxX, maxY, minZ);
+        tessellator.addVertex(maxX, maxY, maxZ);
+        tessellator.addVertex(maxX, minY, maxZ);
+
+        tessellator.draw();
+
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
     }
 
     public static boolean shouldPlaceOnNeighborBlock() {
@@ -110,7 +154,7 @@ public class RenderCableAnchor {
 
         if (centerPart instanceof PartCable cablePart) {
             BusSupport busSupport = cablePart.supportsBuses();
-            return busSupport != BusSupport.CABLE && busSupport != BusSupport.DENSE_CABLE;
+            return busSupport != BusSupport.CABLE;
         }
 
         return !hasParts(partHost);

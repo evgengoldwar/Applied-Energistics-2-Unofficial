@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import appeng.parts.networking.PartQuartzFiber;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
@@ -60,6 +61,7 @@ public class ViewHelper {
         register(AbstractPartDisplay.class, ViewHelper::handleTerminal);
         register(PartP2PTunnel.class, ViewHelper::handleTerminal);
         register(PartToggleBus.class, ViewHelper::handleToggleBus);
+        register(PartQuartzFiber.class, ViewHelper::handleQuartzFiber);
         register(PartCableAnchor.class, ViewHelper::handleCableAnchor);
     }
 
@@ -145,6 +147,11 @@ public class ViewHelper {
         RenderCableAnchor.renderCableAnchorPreview();
     }
 
+    private static void handleQuartzFiber(ItemStack item) {
+        if (!isActive) return;
+        RenderQuartzFiber.renderQuartzFiberPreview();
+    }
+
     public static AECableType getCableType(ItemStack itemStack) {
         return getCachedPart(itemStack).filter(PartCable.class::isInstance).map(PartCable.class::cast)
                 .map(PartCable::getCableConnectionType).orElse(AECableType.NONE);
@@ -189,13 +196,14 @@ public class ViewHelper {
         boolean isP2p = isP2pItem();
         boolean isToggleBus = isToggleBusItem();
         boolean isCableAnchor = isCableAnchorItem();
+        boolean isQuartzFiber = isQuartzFiberItem();
 
         previewX = mop.blockX;
         previewY = mop.blockY;
         previewZ = mop.blockZ;
         placementSide = ForgeDirection.getOrientation(mop.sideHit);
 
-        if (isTerminal || isP2p || isToggleBus || isCableAnchor) {
+        if (isTerminal || isP2p || isToggleBus || isCableAnchor || isQuartzFiber) {
             isValidPosition = RenderTerminal
                     .canPlaceParts(player.worldObj, placementSide, previewX, previewY, previewZ);
         } else if (isCable) {
@@ -225,6 +233,10 @@ public class ViewHelper {
 
     private static boolean isCableAnchorItem() {
         return getCachedPart(cachedItemStack).filter(PartCableAnchor.class::isInstance).isPresent();
+    }
+
+    private static boolean isQuartzFiberItem() {
+        return getCachedPart(cachedItemStack).filter(PartQuartzFiber.class::isInstance).isPresent();
     }
 
     public static void updatePartialTicks(float partialTicks) {
