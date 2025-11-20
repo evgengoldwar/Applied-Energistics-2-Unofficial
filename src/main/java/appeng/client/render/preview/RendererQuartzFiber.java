@@ -77,7 +77,7 @@ public class RendererQuartzFiber extends AbstractRendererPreview implements IRen
         renderSolidCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderSolidCube(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+    private void renderSolidCube(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         Tessellator tessellator = Tessellator.instance;
 
         GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);

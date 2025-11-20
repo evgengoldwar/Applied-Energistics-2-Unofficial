@@ -93,7 +93,7 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
                 PartLevelTerminal.class);
     }
 
-    private static void renderTerminalBase() {
+    private void renderTerminalBase() {
         double minX = 2.0 / 16.0;
         double minY = 2.0 / 16.0;
         double minZ = 14.0 / 16.0;
@@ -101,10 +101,10 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
         double maxY = 14.0 / 16.0;
         double maxZ = 1.0;
 
-        ViewHelper.renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
+        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderTerminalDisplayFrame() {
+    private void renderTerminalDisplayFrame() {
         double minX = 4.0 / 16.0;
         double minY = 4.0 / 16.0;
         double minZ = 13.0 / 16.0;
@@ -112,6 +112,6 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
         double maxY = 12.0 / 16.0;
         double maxZ = 14.0 / 16.0;
 
-        ViewHelper.renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
+        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

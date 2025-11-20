@@ -2,14 +2,14 @@ package appeng.client.render.preview;
 
 import java.util.List;
 
+import appeng.parts.automation.PartLevelEmitter;
+import com.glodblock.github.common.parts.PartFluidLevelEmitter;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
 
-import appeng.parts.misc.PartToggleBus;
-
-public class RendererToggleBus extends AbstractRendererPreview implements IRenderPreview {
+public class RendererLevelEmitter extends AbstractRendererPreview implements IRenderPreview {
 
     @Override
     public void renderPreview() {
@@ -42,16 +42,15 @@ public class RendererToggleBus extends AbstractRendererPreview implements IRende
         ForgeDirection placementSide = HelperRendererView.getPlacementSide();
 
         if (shouldPlaceOnNeighborBlock) {
-            int toggleBusX = previewX + placementSide.offsetX;
-            int toggleBusY = previewY + placementSide.offsetY;
-            int toggleBusZ = previewZ + placementSide.offsetZ;
-            applySideRotation(toggleBusX, toggleBusY, toggleBusZ, placementSide.getOpposite());
+            int emitterX = previewX + placementSide.offsetX;
+            int emitterY = previewY + placementSide.offsetY;
+            int emitterZ = previewZ + placementSide.offsetZ;
+            applySideRotation(emitterX, emitterY, emitterZ, placementSide.getOpposite());
         } else {
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderToggleBusBase();
-        renderToggleBusConnector();
+        renderLevelEmitterBase();
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -63,26 +62,15 @@ public class RendererToggleBus extends AbstractRendererPreview implements IRende
 
     @Override
     public List<Class<?>> validItemClass() {
-        return HelperRendererView.getValidClasses(PartToggleBus.class);
+        return HelperRendererView.getValidClasses(PartLevelEmitter.class, PartFluidLevelEmitter.class);
     }
 
-    private void renderToggleBusBase() {
-        double minX = 6.0 / 16.0;
-        double minY = 6.0 / 16.0;
+    private void renderLevelEmitterBase() {
+        double minX = 7.0 / 16.0;
+        double minY = 7.0 / 16.0;
         double minZ = 11.0 / 16.0;
-        double maxX = 10.0 / 16.0;
-        double maxY = 10.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderToggleBusConnector() {
-        double minX = 6.0 / 16.0;
-        double minY = 6.0 / 16.0;
-        double minZ = 14.0 / 16.0;
-        double maxX = 10.0 / 16.0;
-        double maxY = 10.0 / 16.0;
+        double maxX = 9.0 / 16.0;
+        double maxY = 9.0 / 16.0;
         double maxZ = 1.0;
 
         renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
