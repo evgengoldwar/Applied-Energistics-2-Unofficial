@@ -29,7 +29,8 @@ public class HelperRendererView {
     // spotless:off
     private static final List<IRenderPreview> iRenderPreviews = Arrays.asList(
             new RendererCableAnchor(),
-            new RendererCable()
+            new RendererCable(),
+            new RendererTerminal()
     );
     // spotless:on
     private static boolean isValidPosition;
