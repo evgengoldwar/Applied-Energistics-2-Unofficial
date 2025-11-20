@@ -35,11 +35,12 @@ public class HelperRendererView {
             new RendererQuartzFiber(),
             new RendererLevelEmitter(),
             new RendererImportBus(),
-            new RendererExportBus()
+            new RendererExportBus(),
+            new RendererAnnihilationPlane()
     );
     // spotless:on
     private static boolean isValidPosition;
-    public static int previewX, previewY, previewZ;
+    private static int previewX, previewY, previewZ;
     private static ForgeDirection placementSide;
     private static float currentPartialTicks;
     private static EntityPlayer player;
