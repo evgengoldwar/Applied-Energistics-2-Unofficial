@@ -1,24 +1,28 @@
 package appeng.client.render.preview;
 
-import appeng.client.render.previewBlocks.ViewHelper;
-import appeng.parts.misc.PartToggleBus;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraftforge.common.util.ForgeDirection;
-import org.lwjgl.opengl.GL11;
-
 import java.util.List;
 
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraftforge.common.util.ForgeDirection;
 
-public class RendererToggleBus extends AbstractRendererPreview implements IRenderPreview{
+import org.lwjgl.opengl.GL11;
+
+import appeng.client.render.previewBlocks.ViewHelper;
+import appeng.parts.misc.PartToggleBus;
+
+public class RendererToggleBus extends AbstractRendererPreview implements IRenderPreview {
+
     @Override
     public void renderPreview() {
         EntityPlayer player = HelperRendererView.getPlayer();
         if (player == null) return;
 
-        double playerX = player.lastTickPosX + (player.posX - player.lastTickPosX) * HelperRendererView.getCurrentPartialTicks();
-        double playerY = player.lastTickPosY + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
-        double playerZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
+        double playerX = player.lastTickPosX
+                + (player.posX - player.lastTickPosX) * HelperRendererView.getCurrentPartialTicks();
+        double playerY = player.lastTickPosY
+                + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
+        double playerZ = player.lastTickPosZ
+                + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
 
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
