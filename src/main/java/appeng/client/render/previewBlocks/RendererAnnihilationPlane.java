@@ -1,4 +1,4 @@
-package appeng.client.render.preview;
+package appeng.client.render.previewBlocks;
 
 import java.util.List;
 
@@ -19,11 +19,11 @@ public class RendererAnnihilationPlane extends AbstractRendererPreview implement
         if (player == null) return;
 
         double playerX = player.lastTickPosX
-                + (player.posX - player.lastTickPosX) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
         double playerY = player.lastTickPosY
-                + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
         double playerZ = player.lastTickPosZ
-                + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
 
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
@@ -38,10 +38,10 @@ public class RendererAnnihilationPlane extends AbstractRendererPreview implement
         getValidColorGL11();
 
         boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
-        ForgeDirection placementSide = HelperRendererView.getPlacementSide();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
+        ForgeDirection placementSide = ViewHelper.getPlacementSide();
 
         if (shouldPlaceOnNeighborBlock) {
             int planeX = previewX + placementSide.offsetX;
@@ -65,7 +65,7 @@ public class RendererAnnihilationPlane extends AbstractRendererPreview implement
 
     @Override
     public List<Class<?>> validItemClass() {
-        return HelperRendererView.getValidClasses(PartAnnihilationPlane.class, PartFormationPlane.class);
+        return ViewHelper.getValidClasses(PartAnnihilationPlane.class, PartFormationPlane.class);
     }
 
     private void renderAnnihilationPlaneBase() {

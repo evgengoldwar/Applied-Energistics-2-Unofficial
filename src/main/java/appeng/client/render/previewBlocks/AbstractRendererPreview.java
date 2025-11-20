@@ -1,4 +1,4 @@
-package appeng.client.render.preview;
+package appeng.client.render.previewBlocks;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
@@ -62,7 +62,7 @@ public abstract class AbstractRendererPreview {
     }
 
     protected void getValidColorGL11() {
-        if (HelperRendererView.getValidPosition()) {
+        if (ViewHelper.getValidPosition()) {
             GL11.glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
         } else {
             GL11.glColor4f(1.0f, 0.0f, 0.0f, 0.6f);
@@ -70,9 +70,9 @@ public abstract class AbstractRendererPreview {
     }
 
     protected void setPreviewOffset(int x, int y, int z, ForgeDirection side) {
-        HelperRendererView.setPreviewX(x + side.offsetX);
-        HelperRendererView.setPreviewY(y + side.offsetY);
-        HelperRendererView.setPreviewZ(z + side.offsetZ);
+        ViewHelper.setPreviewX(x + side.offsetX);
+        ViewHelper.setPreviewY(y + side.offsetY);
+        ViewHelper.setPreviewZ(z + side.offsetZ);
     }
 
     protected boolean canPlaceBlockAt(World world, int x, int y, int z) {
@@ -124,16 +124,14 @@ public abstract class AbstractRendererPreview {
     }
 
     protected boolean shouldPlaceOnNeighborBlock() {
-        TileEntity te = HelperRendererView.getWorld().getTileEntity(
-                HelperRendererView.getPreviewX(),
-                HelperRendererView.getPreviewY(),
-                HelperRendererView.getPreviewZ());
+        TileEntity te = ViewHelper.getWorld()
+                .getTileEntity(ViewHelper.getPreviewX(), ViewHelper.getPreviewY(), ViewHelper.getPreviewZ());
 
         if (!(te instanceof IPartHost partHost)) {
             return true;
         }
 
-        IPart existingPart = partHost.getPart(HelperRendererView.getPlacementSide());
+        IPart existingPart = partHost.getPart(ViewHelper.getPlacementSide());
         if (existingPart != null) {
             return true;
         }

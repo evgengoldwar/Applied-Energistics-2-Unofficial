@@ -1,29 +1,28 @@
 package appeng.client.render.previewBlocks;
 
-import static appeng.client.render.previewBlocks.ViewHelper.*;
+import java.util.List;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
 
-import appeng.api.parts.BusSupport;
-import appeng.api.parts.IPart;
-import appeng.api.parts.IPartHost;
-import appeng.parts.networking.PartCable;
+import appeng.parts.networking.PartQuartzFiber;
 
-public class RenderQuartzFiber {
+public class RendererQuartzFiber extends AbstractRendererPreview implements IRenderPreview {
 
-    public static void renderQuartzFiberPreview() {
-        EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+    @Override
+    public void renderPreview() {
+        EntityPlayer player = ViewHelper.getPlayer();
         if (player == null) return;
 
-        double playerX = player.lastTickPosX + (player.posX - player.lastTickPosX) * currentPartialTicks;
-        double playerY = player.lastTickPosY + (player.posY - player.lastTickPosY) * currentPartialTicks;
-        double playerZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * currentPartialTicks;
+        double playerX = player.lastTickPosX
+                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
+        double playerY = player.lastTickPosY
+                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
+        double playerZ = player.lastTickPosZ
+                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
 
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
@@ -38,6 +37,10 @@ public class RenderQuartzFiber {
         getValidColorGL11();
 
         boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
+        ForgeDirection placementSide = ViewHelper.getPlacementSide();
 
         if (shouldPlaceOnNeighborBlock) {
             int fiberX = previewX + placementSide.offsetX;
@@ -58,44 +61,23 @@ public class RenderQuartzFiber {
         GL11.glPopMatrix();
     }
 
-    private static void applySideRotation(double x, double y, double z, ForgeDirection side) {
-        GL11.glTranslated(x + 0.5, y + 0.5, z + 0.5);
-
-        switch (side) {
-            case DOWN:
-                GL11.glRotatef(90, 1, 0, 0);
-                break;
-            case UP:
-                GL11.glRotatef(-90, 1, 0, 0);
-                break;
-            case NORTH:
-                GL11.glRotatef(180, 0, 1, 0);
-                break;
-            case SOUTH:
-                break;
-            case WEST:
-                GL11.glRotatef(-90, 0, 1, 0);
-                break;
-            case EAST:
-                GL11.glRotatef(90, 0, 1, 0);
-                break;
-        }
-
-        GL11.glTranslated(-0.5, -0.5, -0.5);
+    @Override
+    public List<Class<?>> validItemClass() {
+        return ViewHelper.getValidClasses(PartQuartzFiber.class);
     }
 
-    private static void renderQuartzFiberSolid() {
+    private void renderQuartzFiberSolid() {
         double minX = 6.0 / 16.0;
         double minY = 6.0 / 16.0;
         double minZ = 10.0 / 16.0;
         double maxX = 10.0 / 16.0;
         double maxY = 10.0 / 16.0;
-        double maxZ = 16.0 / 16.0;
+        double maxZ = 1.0;
 
         renderSolidCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderSolidCube(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+    private void renderSolidCube(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         Tessellator tessellator = Tessellator.instance;
 
         GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
@@ -136,27 +118,5 @@ public class RenderQuartzFiber {
         tessellator.draw();
 
         GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
-    }
-
-    public static boolean shouldPlaceOnNeighborBlock() {
-        TileEntity te = getWorld().getTileEntity(previewX, previewY, previewZ);
-
-        if (!(te instanceof IPartHost partHost)) {
-            return true;
-        }
-
-        IPart existingPart = partHost.getPart(placementSide);
-        if (existingPart != null) {
-            return true;
-        }
-
-        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
-
-        if (centerPart instanceof PartCable cablePart) {
-            BusSupport busSupport = cablePart.supportsBuses();
-            return busSupport != BusSupport.CABLE;
-        }
-
-        return !hasParts(partHost);
     }
 }

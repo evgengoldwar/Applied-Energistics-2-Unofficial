@@ -1,4 +1,4 @@
-package appeng.client.render.preview;
+package appeng.client.render.previewBlocks;
 
 import java.util.List;
 
@@ -26,15 +26,15 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
 
     @Override
     public void renderPreview() {
-        EntityPlayer player = HelperRendererView.getPlayer();
+        EntityPlayer player = ViewHelper.getPlayer();
         if (player == null) return;
 
         double playerX = player.lastTickPosX
-                + (player.posX - player.lastTickPosX) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
         double playerY = player.lastTickPosY
-                + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
         double playerZ = player.lastTickPosZ
-                + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
 
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
@@ -49,10 +49,10 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
         getValidColorGL11();
 
         boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
-        ForgeDirection placementSide = HelperRendererView.getPlacementSide();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
+        ForgeDirection placementSide = ViewHelper.getPlacementSide();
 
         if (shouldPlaceOnNeighborBlock) {
             int terminalX = previewX + placementSide.offsetX;
@@ -76,7 +76,7 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
 
     @Override
     public List<Class<?>> validItemClass() {
-        return HelperRendererView.getValidClasses(
+        return ViewHelper.getValidClasses(
                 AbstractPartDisplay.class,
                 PartFluidTerminal.class,
                 PartP2PTunnel.class,

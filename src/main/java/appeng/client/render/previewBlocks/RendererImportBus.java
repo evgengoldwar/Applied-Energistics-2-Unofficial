@@ -1,4 +1,4 @@
-package appeng.client.render.preview;
+package appeng.client.render.previewBlocks;
 
 import java.util.List;
 
@@ -15,15 +15,15 @@ public class RendererImportBus extends AbstractRendererPreview implements IRende
 
     @Override
     public void renderPreview() {
-        EntityPlayer player = HelperRendererView.getPlayer();
+        EntityPlayer player = ViewHelper.getPlayer();
         if (player == null) return;
 
         double playerX = player.lastTickPosX
-                + (player.posX - player.lastTickPosX) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
         double playerY = player.lastTickPosY
-                + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
         double playerZ = player.lastTickPosZ
-                + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
 
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
@@ -38,10 +38,10 @@ public class RendererImportBus extends AbstractRendererPreview implements IRende
         getValidColorGL11();
 
         boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
-        ForgeDirection placementSide = HelperRendererView.getPlacementSide();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
+        ForgeDirection placementSide = ViewHelper.getPlacementSide();
 
         if (shouldPlaceOnNeighborBlock) {
             int importBusX = previewX + placementSide.offsetX;
@@ -66,7 +66,7 @@ public class RendererImportBus extends AbstractRendererPreview implements IRende
 
     @Override
     public List<Class<?>> validItemClass() {
-        return HelperRendererView.getValidClasses(PartImportBus.class, PartFluidImportBus.class);
+        return ViewHelper.getValidClasses(PartImportBus.class, PartFluidImportBus.class);
     }
 
     private void renderImportBusBase() {

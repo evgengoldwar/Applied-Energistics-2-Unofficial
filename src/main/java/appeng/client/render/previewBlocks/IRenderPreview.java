@@ -1,4 +1,4 @@
-package appeng.client.render.preview;
+package appeng.client.render.previewBlocks;
 
 import java.util.List;
 

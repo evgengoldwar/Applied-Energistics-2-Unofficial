@@ -55,7 +55,7 @@ import appeng.client.render.effects.LightningArcFX;
 import appeng.client.render.effects.LightningFX;
 import appeng.client.render.effects.VibrantFX;
 import appeng.client.render.highlighter.HighlighterManager;
-import appeng.client.render.preview.BlockRendererPreview;
+import appeng.client.render.previewBlocks.BlockRendererPreviewEvent;
 import appeng.client.texture.CableBusTextures;
 import appeng.client.texture.ExtraBlockTextures;
 import appeng.client.texture.ExtraItemTextures;
@@ -110,8 +110,8 @@ public class ClientHelper extends ServerHelper {
         // MinecraftForge.EVENT_BUS.register(BlockPreviewRenderer.getInstance());
         // FMLCommonHandler.instance().bus().register(BlockPreviewRenderer.getInstance());
 
-        MinecraftForge.EVENT_BUS.register(BlockRendererPreview.getInstance());
-        FMLCommonHandler.instance().bus().register(BlockRendererPreview.getInstance());
+        MinecraftForge.EVENT_BUS.register(BlockRendererPreviewEvent.getInstance());
+        FMLCommonHandler.instance().bus().register(BlockRendererPreviewEvent.getInstance());
 
         for (ActionKey key : ActionKey.values()) {
             final KeyBinding binding = new KeyBinding(key.getTranslationKey(), key.getDefaultKey(), KEY_CATEGORY);

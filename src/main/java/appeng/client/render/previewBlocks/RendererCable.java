@@ -1,4 +1,4 @@
-package appeng.client.render.preview;
+package appeng.client.render.previewBlocks;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -29,15 +29,15 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     @Override
     public void renderPreview() {
-        EntityPlayer player = HelperRendererView.getPlayer();
+        EntityPlayer player = ViewHelper.getPlayer();
         if (player == null) return;
 
         double playerX = player.lastTickPosX
-                + (player.posX - player.lastTickPosX) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
         double playerY = player.lastTickPosY
-                + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
         double playerZ = player.lastTickPosZ
-                + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
 
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
@@ -68,12 +68,12 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     @Override
     public List<Class<?>> validItemClass() {
-        return HelperRendererView.getValidClasses(PartCable.class);
+        return ViewHelper.getValidClasses(PartCable.class);
     }
 
     @Override
     protected boolean canPlace(World world, ForgeDirection side, int x, int y, int z) {
-        AECableType cableType = HelperRendererView.getCableType(HelperRendererView.getCachedItemStack());
+        AECableType cableType = ViewHelper.getCableType(ViewHelper.getCachedItemStack());
         boolean isDense = cableType != null && isDenseCable(cableType);
         TileEntity te = world.getTileEntity(x, y, z);
         TileEntity neighborTe = world.getTileEntity(x + side.offsetX, y + side.offsetY, z + side.offsetZ);
@@ -99,9 +99,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
             setPreviewOffset(x, y, z, side);
             return canConnectToGridHost(gridHost, side.getOpposite()) || canPlaceBlockAt(
                     world,
-                    HelperRendererView.getPreviewX(),
-                    HelperRendererView.getPreviewY(),
-                    HelperRendererView.getPreviewZ());
+                    ViewHelper.getPreviewX(),
+                    ViewHelper.getPreviewY(),
+                    ViewHelper.getPreviewZ());
         }
 
         return false;
@@ -124,11 +124,7 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
             if (isDense) return false;
             return centerPartNeighbor == null;
         } else {
-            return canPlaceBlockAt(
-                    world,
-                    HelperRendererView.getPreviewX(),
-                    HelperRendererView.getPreviewY(),
-                    HelperRendererView.getPreviewZ());
+            return canPlaceBlockAt(world, ViewHelper.getPreviewX(), ViewHelper.getPreviewY(), ViewHelper.getPreviewZ());
         }
     }
 
@@ -140,15 +136,11 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
             if (isDense) return false;
             return centerPart == null;
         }
-        return canPlaceBlockAt(
-                world,
-                HelperRendererView.getPreviewX(),
-                HelperRendererView.getPreviewY(),
-                HelperRendererView.getPreviewZ());
+        return canPlaceBlockAt(world, ViewHelper.getPreviewX(), ViewHelper.getPreviewY(), ViewHelper.getPreviewZ());
     }
 
     private boolean isDense() {
-        AECableType type = HelperRendererView.getCableType(HelperRendererView.getCachedItemStack());
+        AECableType type = ViewHelper.getCableType(ViewHelper.getCachedItemStack());
         return type == AECableType.DENSE || type == AECableType.DENSE_COVERED;
     }
 
@@ -159,9 +151,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     private void renderCableCore(double size) {
         double min = (6.0 - size) / 16.0;
         double max = (10.0 + size) / 16.0;
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
 
         double minX = previewX + min;
         double minY = previewY + min;
@@ -187,10 +179,10 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     }
 
     private boolean shouldRenderConnection(ForgeDirection direction) {
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
-        World world = HelperRendererView.getWorld();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
+        World world = ViewHelper.getWorld();
         TileEntity te = world.getTileEntity(previewX, previewY, previewZ);
         TileEntity neighborTe = world.getTileEntity(
                 previewX + direction.offsetX,
@@ -243,7 +235,7 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     private boolean canConnectToPart(IPart part, ForgeDirection side) {
         if (part instanceof IPartCable cable) {
             AEColor color = cable.getCableColor();
-            return isColorCompatible(color, HelperRendererView.getCableColor(HelperRendererView.getCachedItemStack()));
+            return isColorCompatible(color, ViewHelper.getCableColor(ViewHelper.getCachedItemStack()));
         }
         return false;
     }
@@ -276,9 +268,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     }
 
     private AECableType getNeighborCableType(ForgeDirection direction) {
-        int neighborX = HelperRendererView.getPreviewX() + direction.offsetX;
-        int neighborY = HelperRendererView.getPreviewY() + direction.offsetY;
-        int neighborZ = HelperRendererView.getPreviewZ() + direction.offsetZ;
+        int neighborX = ViewHelper.getPreviewX() + direction.offsetX;
+        int neighborY = ViewHelper.getPreviewY() + direction.offsetY;
+        int neighborZ = ViewHelper.getPreviewZ() + direction.offsetZ;
 
         TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(neighborX, neighborY, neighborZ);
         if (te == null) {
@@ -303,9 +295,7 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
             AECableType connectionType = gridHost.getCableConnectionType(direction.getOpposite());
             if (connectionType != null && gridHost instanceof PartCable cable) {
                 AEColor color = cable.getCableColor();
-                if (isColorCompatible(
-                        color,
-                        HelperRendererView.getCableColor(HelperRendererView.getCachedItemStack()))) {
+                if (isColorCompatible(color, ViewHelper.getCableColor(ViewHelper.getCachedItemStack()))) {
                     return connectionType;
                 }
             }
@@ -326,9 +316,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     private void renderDenseConnection(ForgeDirection direction) {
         double minX, minY, minZ, maxX, maxY, maxZ;
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
         switch (direction) {
             case DOWN:
                 minX = previewX + 4.0 / 16.0;
@@ -387,9 +377,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     private void renderNormalConnectionForDense(ForgeDirection direction) {
         double minX, minY, minZ, maxX, maxY, maxZ;
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
         switch (direction) {
             case DOWN:
                 minX = previewX + 6.0 / 16.0;
@@ -456,9 +446,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     private void renderNormalConnection(ForgeDirection direction, boolean shortest) {
         double minX, minY, minZ, maxX, maxY, maxZ;
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
         switch (direction) {
             case DOWN:
                 minX = previewX + 6.0 / 16.0;

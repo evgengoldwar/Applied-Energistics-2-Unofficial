@@ -7,17 +7,14 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
-public class BlockPreviewRenderer {
+public class BlockRendererPreviewEvent {
 
-    private static BlockPreviewRenderer instance;
+    private static BlockRendererPreviewEvent instance;
 
-    public static BlockPreviewRenderer getInstance() {
+    public static BlockRendererPreviewEvent getInstance() {
         if (instance == null) {
-            instance = new BlockPreviewRenderer();
+            instance = new BlockRendererPreviewEvent();
         }
         return instance;
     }
@@ -44,13 +41,14 @@ public class BlockPreviewRenderer {
         }
 
         ViewHelper.setPlayer(player);
+        ViewHelper.setCachedItemStack(currentItem);
         ViewHelper.updatePreview(player);
     }
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
         if (currentItem == null) return;
-        ViewHelper.updatePartialTicks(event.partialTicks);
+        ViewHelper.setCurrentPartialTicks(event.partialTicks);
         ViewHelper.handleItem(currentItem);
     }
 

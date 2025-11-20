@@ -1,4 +1,4 @@
-package appeng.client.render.preview;
+package appeng.client.render.previewBlocks;
 
 import java.util.List;
 
@@ -7,23 +7,22 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
 
-import com.glodblock.github.common.parts.PartFluidLevelEmitter;
+import appeng.parts.misc.PartCableAnchor;
 
-import appeng.parts.automation.PartLevelEmitter;
-
-public class RendererLevelEmitter extends AbstractRendererPreview implements IRenderPreview {
+public class RendererCableAnchor extends AbstractRendererPreview implements IRenderPreview {
 
     @Override
     public void renderPreview() {
-        EntityPlayer player = HelperRendererView.getPlayer();
+        EntityPlayer player = ViewHelper.getPlayer();
         if (player == null) return;
 
         double playerX = player.lastTickPosX
-                + (player.posX - player.lastTickPosX) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
         double playerY = player.lastTickPosY
-                + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
         double playerZ = player.lastTickPosZ
-                + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
+                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
+        ForgeDirection placementSide = ViewHelper.getPlacementSide();
 
         GL11.glPushMatrix();
         GL11.glTranslated(-playerX, -playerY, -playerZ);
@@ -38,21 +37,20 @@ public class RendererLevelEmitter extends AbstractRendererPreview implements IRe
         getValidColorGL11();
 
         boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
-        ForgeDirection placementSide = HelperRendererView.getPlacementSide();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
 
         if (shouldPlaceOnNeighborBlock) {
-            int emitterX = previewX + placementSide.offsetX;
-            int emitterY = previewY + placementSide.offsetY;
-            int emitterZ = previewZ + placementSide.offsetZ;
-            applySideRotation(emitterX, emitterY, emitterZ, placementSide.getOpposite());
+            int anchorX = previewX + placementSide.offsetX;
+            int anchorY = previewY + placementSide.offsetY;
+            int anchorZ = previewZ + placementSide.offsetZ;
+            applySideRotation(anchorX, anchorY, anchorZ, placementSide.getOpposite());
         } else {
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderLevelEmitterBase();
+        renderCableAnchorBase();
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -62,19 +60,19 @@ public class RendererLevelEmitter extends AbstractRendererPreview implements IRe
         GL11.glPopMatrix();
     }
 
-    @Override
-    public List<Class<?>> validItemClass() {
-        return HelperRendererView.getValidClasses(PartLevelEmitter.class, PartFluidLevelEmitter.class);
-    }
-
-    private void renderLevelEmitterBase() {
+    private void renderCableAnchorBase() {
         double minX = 7.0 / 16.0;
         double minY = 7.0 / 16.0;
-        double minZ = 11.0 / 16.0;
+        double minZ = 10.0 / 16.0;
         double maxX = 9.0 / 16.0;
         double maxY = 9.0 / 16.0;
         double maxZ = 1.0;
 
         renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    @Override
+    public List<Class<?>> validItemClass() {
+        return ViewHelper.getValidClasses(PartCableAnchor.class);
     }
 }
