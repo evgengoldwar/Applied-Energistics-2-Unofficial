@@ -31,7 +31,8 @@ public class HelperRendererView {
             new RendererCableAnchor(),
             new RendererCable(),
             new RendererTerminal(),
-            new RendererToggleBus()
+            new RendererToggleBus(),
+            new RendererQuartzFiber()
     );
     // spotless:on
     private static boolean isValidPosition;
