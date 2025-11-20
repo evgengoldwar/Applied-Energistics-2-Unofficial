@@ -34,7 +34,7 @@ public class HelperRendererView {
     // spotless:on
     private static boolean isValidPosition;
     public static int previewX, previewY, previewZ;
-    public static ForgeDirection placementSide;
+    private static ForgeDirection placementSide;
     private static float currentPartialTicks;
     private static EntityPlayer player;
     private static ItemStack cachedItemStack = null;

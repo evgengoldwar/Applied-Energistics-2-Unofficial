@@ -1,9 +1,5 @@
 package appeng.client.render.preview;
 
-import static appeng.client.render.preview.HelperRendererView.previewX;
-import static appeng.client.render.preview.HelperRendererView.previewY;
-import static appeng.client.render.preview.HelperRendererView.previewZ;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Supplier;
@@ -79,7 +75,6 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     protected boolean canPlace(World world, ForgeDirection side, int x, int y, int z) {
         AECableType cableType = HelperRendererView.getCableType(HelperRendererView.getCachedItemStack());
         boolean isDense = cableType != null && isDenseCable(cableType);
-
         TileEntity te = world.getTileEntity(x, y, z);
         TileEntity neighborTe = world.getTileEntity(x + side.offsetX, y + side.offsetY, z + side.offsetZ);
 
@@ -164,6 +159,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     private void renderCableCore(double size) {
         double min = (6.0 - size) / 16.0;
         double max = (10.0 + size) / 16.0;
+        int previewX = HelperRendererView.getPreviewX();
+        int previewY = HelperRendererView.getPreviewY();
+        int previewZ = HelperRendererView.getPreviewZ();
 
         double minX = previewX + min;
         double minY = previewY + min;
@@ -189,6 +187,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     }
 
     private boolean shouldRenderConnection(ForgeDirection direction) {
+        int previewX = HelperRendererView.getPreviewX();
+        int previewY = HelperRendererView.getPreviewY();
+        int previewZ = HelperRendererView.getPreviewZ();
         World world = HelperRendererView.getWorld();
         TileEntity te = world.getTileEntity(previewX, previewY, previewZ);
         TileEntity neighborTe = world.getTileEntity(
@@ -275,9 +276,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
     }
 
     private AECableType getNeighborCableType(ForgeDirection direction) {
-        int neighborX = previewX + direction.offsetX;
-        int neighborY = previewY + direction.offsetY;
-        int neighborZ = previewZ + direction.offsetZ;
+        int neighborX = HelperRendererView.getPreviewX() + direction.offsetX;
+        int neighborY = HelperRendererView.getPreviewY() + direction.offsetY;
+        int neighborZ = HelperRendererView.getPreviewZ() + direction.offsetZ;
 
         TileEntity te = Minecraft.getMinecraft().theWorld.getTileEntity(neighborX, neighborY, neighborZ);
         if (te == null) {
@@ -325,6 +326,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     private void renderDenseConnection(ForgeDirection direction) {
         double minX, minY, minZ, maxX, maxY, maxZ;
+        int previewX = HelperRendererView.getPreviewX();
+        int previewY = HelperRendererView.getPreviewY();
+        int previewZ = HelperRendererView.getPreviewZ();
         switch (direction) {
             case DOWN:
                 minX = previewX + 4.0 / 16.0;
@@ -383,6 +387,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     private void renderNormalConnectionForDense(ForgeDirection direction) {
         double minX, minY, minZ, maxX, maxY, maxZ;
+        int previewX = HelperRendererView.getPreviewX();
+        int previewY = HelperRendererView.getPreviewY();
+        int previewZ = HelperRendererView.getPreviewZ();
         switch (direction) {
             case DOWN:
                 minX = previewX + 6.0 / 16.0;
@@ -449,7 +456,9 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
 
     private void renderNormalConnection(ForgeDirection direction, boolean shortest) {
         double minX, minY, minZ, maxX, maxY, maxZ;
-
+        int previewX = HelperRendererView.getPreviewX();
+        int previewY = HelperRendererView.getPreviewY();
+        int previewZ = HelperRendererView.getPreviewZ();
         switch (direction) {
             case DOWN:
                 minX = previewX + 6.0 / 16.0;

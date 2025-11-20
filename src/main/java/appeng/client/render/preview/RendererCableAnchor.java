@@ -22,9 +22,6 @@ public class RendererCableAnchor extends AbstractRendererPreview implements IRen
                 + (player.posY - player.lastTickPosY) * HelperRendererView.getCurrentPartialTicks();
         double playerZ = player.lastTickPosZ
                 + (player.posZ - player.lastTickPosZ) * HelperRendererView.getCurrentPartialTicks();
-        int previewX = HelperRendererView.getPreviewX();
-        int previewY = HelperRendererView.getPreviewY();
-        int previewZ = HelperRendererView.getPreviewZ();
         ForgeDirection placementSide = HelperRendererView.getPlacementSide();
 
         GL11.glPushMatrix();
@@ -40,6 +37,9 @@ public class RendererCableAnchor extends AbstractRendererPreview implements IRen
         getValidColorGL11();
 
         boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
+        int previewX = HelperRendererView.getPreviewX();
+        int previewY = HelperRendererView.getPreviewY();
+        int previewZ = HelperRendererView.getPreviewZ();
 
         if (shouldPlaceOnNeighborBlock) {
             int anchorX = previewX + placementSide.offsetX;
@@ -47,7 +47,7 @@ public class RendererCableAnchor extends AbstractRendererPreview implements IRen
             int anchorZ = previewZ + placementSide.offsetZ;
             applySideRotation(anchorX, anchorY, anchorZ, placementSide.getOpposite());
         } else {
-            applySideRotation(HelperRendererView.getPreviewX(), previewY, previewZ, placementSide);
+            applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
         renderCableAnchorBase();
