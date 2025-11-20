@@ -107,9 +107,6 @@ public class ClientHelper extends ServerHelper {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new BlockPosHighlighter());
         MinecraftForge.EVENT_BUS.register(new HighlighterManager());
-        // MinecraftForge.EVENT_BUS.register(BlockPreviewRenderer.getInstance());
-        // FMLCommonHandler.instance().bus().register(BlockPreviewRenderer.getInstance());
-
         MinecraftForge.EVENT_BUS.register(BlockRendererPreviewEvent.getInstance());
         FMLCommonHandler.instance().bus().register(BlockRendererPreviewEvent.getInstance());
 
