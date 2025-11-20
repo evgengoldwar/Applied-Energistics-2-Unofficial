@@ -1,0 +1,187 @@
+package appeng.client.render.preview;
+
+import net.minecraft.block.Block;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
+import net.minecraftforge.common.util.ForgeDirection;
+
+import org.lwjgl.opengl.GL11;
+
+import appeng.api.implementations.parts.IPartCable;
+import appeng.api.parts.BusSupport;
+import appeng.api.parts.IPart;
+import appeng.api.parts.IPartHost;
+import appeng.parts.networking.PartCable;
+
+public abstract class AbstractRendererPreview {
+
+    protected void renderWireframeCube(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        Tessellator tessellator = Tessellator.instance;
+
+        GL11.glLineWidth(3.0f);
+        tessellator.startDrawing(GL11.GL_LINES);
+
+        tessellator.addVertex(minX, minY, minZ);
+        tessellator.addVertex(maxX, minY, minZ);
+
+        tessellator.addVertex(maxX, minY, minZ);
+        tessellator.addVertex(maxX, minY, maxZ);
+
+        tessellator.addVertex(maxX, minY, maxZ);
+        tessellator.addVertex(minX, minY, maxZ);
+
+        tessellator.addVertex(minX, minY, maxZ);
+        tessellator.addVertex(minX, minY, minZ);
+
+        tessellator.addVertex(minX, maxY, minZ);
+        tessellator.addVertex(maxX, maxY, minZ);
+
+        tessellator.addVertex(maxX, maxY, minZ);
+        tessellator.addVertex(maxX, maxY, maxZ);
+
+        tessellator.addVertex(maxX, maxY, maxZ);
+        tessellator.addVertex(minX, maxY, maxZ);
+
+        tessellator.addVertex(minX, maxY, maxZ);
+        tessellator.addVertex(minX, maxY, minZ);
+
+        tessellator.addVertex(minX, minY, minZ);
+        tessellator.addVertex(minX, maxY, minZ);
+
+        tessellator.addVertex(maxX, minY, minZ);
+        tessellator.addVertex(maxX, maxY, minZ);
+
+        tessellator.addVertex(maxX, minY, maxZ);
+        tessellator.addVertex(maxX, maxY, maxZ);
+
+        tessellator.addVertex(minX, minY, maxZ);
+        tessellator.addVertex(minX, maxY, maxZ);
+
+        tessellator.draw();
+    }
+
+    protected void getValidColorGL11() {
+        if (HelperRendererView.getValidPosition()) {
+            GL11.glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
+        } else {
+            GL11.glColor4f(1.0f, 0.0f, 0.0f, 0.6f);
+        }
+    }
+
+    protected void setPreviewOffset(int x, int y, int z, ForgeDirection side) {
+        HelperRendererView.setPreviewX(x + side.offsetX);
+        HelperRendererView.setPreviewY(y + side.offsetY);
+        HelperRendererView.setPreviewZ(z + side.offsetZ);
+    }
+
+    protected boolean canPlaceBlockAt(World world, int x, int y, int z) {
+        if (world.isAirBlock(x, y, z)) {
+            return true;
+        }
+        Block block = world.getBlock(x, y, z);
+        return block != null && block.isReplaceable(world, x, y, z);
+    }
+
+    protected boolean hasParts(IPartHost partHost) {
+        if (partHost.getPart(ForgeDirection.UNKNOWN) != null) {
+            return true;
+        }
+
+        for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
+            if (partHost.getPart(dir) != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected void applySideRotation(double x, double y, double z, ForgeDirection side) {
+        GL11.glTranslated(x + 0.5, y + 0.5, z + 0.5);
+
+        switch (side) {
+            case DOWN:
+                GL11.glRotatef(90, 1, 0, 0);
+                break;
+            case UP:
+                GL11.glRotatef(-90, 1, 0, 0);
+                break;
+            case NORTH:
+                GL11.glRotatef(180, 0, 1, 0);
+                break;
+            case SOUTH:
+                break;
+            case WEST:
+                GL11.glRotatef(-90, 0, 1, 0);
+                break;
+            case EAST:
+                GL11.glRotatef(90, 0, 1, 0);
+                break;
+        }
+
+        GL11.glTranslated(-0.5, -0.5, -0.5);
+    }
+
+    protected boolean shouldPlaceOnNeighborBlock() {
+        TileEntity te = HelperRendererView.getWorld().getTileEntity(
+                HelperRendererView.getPreviewX(),
+                HelperRendererView.getPreviewY(),
+                HelperRendererView.getPreviewZ());
+
+        if (!(te instanceof IPartHost partHost)) {
+            return true;
+        }
+
+        IPart existingPart = partHost.getPart(HelperRendererView.getPlacementSide());
+        if (existingPart != null) {
+            return true;
+        }
+
+        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+
+        if (centerPart instanceof PartCable cablePart) {
+            BusSupport busSupport = cablePart.supportsBuses();
+            return busSupport != BusSupport.CABLE && busSupport != BusSupport.DENSE_CABLE;
+        }
+
+        return !hasParts(partHost);
+    }
+
+    protected boolean canPlace(World world, ForgeDirection side, int x, int y, int z) {
+        int neighborX = x + side.offsetX;
+        int neighborY = y + side.offsetY;
+        int neighborZ = z + side.offsetZ;
+
+        TileEntity te = world.getTileEntity(x, y, z);
+        TileEntity neighborTe = world.getTileEntity(neighborX, neighborY, neighborZ);
+        boolean canPlaceOnNeighbor = canPlaceBlockAt(world, neighborX, neighborY, neighborZ);
+
+        if (!shouldPlaceOnNeighborBlock() && checkTe(te, side, canPlaceOnNeighbor)) {
+            return true;
+        }
+
+        return checkTe(neighborTe, side, canPlaceOnNeighbor);
+    }
+
+    protected boolean checkTe(TileEntity te, ForgeDirection side, boolean canPlaceOnNeighbor) {
+        if (!(te instanceof IPartHost partHost)) {
+            return canPlaceOnNeighbor;
+        }
+
+        if (partHost.getPart(side) != null && !shouldPlaceOnNeighborBlock()) {
+            return false;
+        }
+
+        if (partHost.getPart(side.getOpposite()) != null) {
+            return false;
+        }
+
+        IPart centerPart = partHost.getPart(ForgeDirection.UNKNOWN);
+        if (centerPart instanceof IPartCable cable) {
+            return cable.supportsBuses() == BusSupport.CABLE;
+        }
+
+        return hasParts(partHost);
+    }
+}
