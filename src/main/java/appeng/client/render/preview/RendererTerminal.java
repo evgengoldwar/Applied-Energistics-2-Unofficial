@@ -14,7 +14,6 @@ import com.glodblock.github.common.parts.PartFluidStorageBus;
 import com.glodblock.github.common.parts.PartFluidTerminal;
 import com.glodblock.github.common.parts.PartLevelTerminal;
 
-import appeng.client.render.previewBlocks.ViewHelper;
 import appeng.parts.misc.PartInterface;
 import appeng.parts.misc.PartStorageBus;
 import appeng.parts.p2p.PartP2PTunnel;

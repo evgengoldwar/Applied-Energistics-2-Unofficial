@@ -2,12 +2,14 @@ package appeng.client.render.preview;
 
 import java.util.List;
 
-import appeng.parts.automation.PartLevelEmitter;
-import com.glodblock.github.common.parts.PartFluidLevelEmitter;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.lwjgl.opengl.GL11;
+
+import com.glodblock.github.common.parts.PartFluidLevelEmitter;
+
+import appeng.parts.automation.PartLevelEmitter;
 
 public class RendererLevelEmitter extends AbstractRendererPreview implements IRenderPreview {
 
