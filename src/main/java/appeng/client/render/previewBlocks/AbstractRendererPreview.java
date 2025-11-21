@@ -2,6 +2,7 @@ package appeng.client.render.previewBlocks;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -183,7 +184,8 @@ public abstract class AbstractRendererPreview {
         return hasParts(partHost);
     }
 
-    protected void renderBase(double minXBase, double minYBase, double minZBase, double maxXBase, double maxYBase, double maxZBase) {
+    protected void renderBase(double minXBase, double minYBase, double minZBase, double maxXBase, double maxYBase,
+            double maxZBase) {
         double minX = minXBase / 16.0;
         double minY = minYBase / 16.0;
         double minZ = minZBase / 16.0;
@@ -192,5 +194,61 @@ public abstract class AbstractRendererPreview {
         double maxZ = maxZBase / 16.0;
 
         renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    protected void renderCommonPreview(Runnable renderSpecificContent) {
+        EntityPlayer player = ViewHelper.getPlayer();
+        if (player == null) return;
+
+        setupGlState(player);
+
+        boolean shouldPlaceOnNeighborBlock = shouldPlaceOnNeighborBlock();
+        int previewX = ViewHelper.getPreviewX();
+        int previewY = ViewHelper.getPreviewY();
+        int previewZ = ViewHelper.getPreviewZ();
+        ForgeDirection placementSide = ViewHelper.getPlacementSide();
+
+        if (shouldPlaceOnNeighborBlock) {
+            int partX = previewX + placementSide.offsetX;
+            int partY = previewY + placementSide.offsetY;
+            int partZ = previewZ + placementSide.offsetZ;
+            applySideRotation(partX, partY, partZ, placementSide.getOpposite());
+        } else {
+            applySideRotation(previewX, previewY, previewZ, placementSide);
+        }
+
+        renderSpecificContent.run();
+
+        clearGlState();
+    }
+
+    protected void setupGlState(EntityPlayer player) {
+        double playerX = player.lastTickPosX
+                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
+        double playerY = player.lastTickPosY
+                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
+        double playerZ = player.lastTickPosZ
+                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
+
+        GL11.glPushMatrix();
+        GL11.glTranslated(-playerX, -playerY, -playerZ);
+
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glDepthMask(false);
+
+        getValidColorGL11();
+    }
+
+    protected void clearGlState() {
+        GL11.glDepthMask(true);
+        GL11.glEnable(GL11.GL_CULL_FACE);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glPopMatrix();
     }
 }

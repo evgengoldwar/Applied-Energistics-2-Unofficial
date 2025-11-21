@@ -2,7 +2,6 @@ package appeng.client.render.previewBlocks;
 
 import java.util.List;
 
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.util.ForgeDirection;
 

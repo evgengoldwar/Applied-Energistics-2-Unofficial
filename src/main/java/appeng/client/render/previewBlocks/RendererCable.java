@@ -10,8 +10,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import org.lwjgl.opengl.GL11;
-
 import appeng.api.implementations.parts.IPartCable;
 import appeng.api.networking.IGridHost;
 import appeng.api.parts.IPart;
@@ -32,23 +30,7 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
         EntityPlayer player = ViewHelper.getPlayer();
         if (player == null) return;
 
-        double playerX = player.lastTickPosX
-                + (player.posX - player.lastTickPosX) * ViewHelper.getCurrentPartialTicks();
-        double playerY = player.lastTickPosY
-                + (player.posY - player.lastTickPosY) * ViewHelper.getCurrentPartialTicks();
-        double playerZ = player.lastTickPosZ
-                + (player.posZ - player.lastTickPosZ) * ViewHelper.getCurrentPartialTicks();
-
-        GL11.glPushMatrix();
-        GL11.glTranslated(-playerX, -playerY, -playerZ);
-
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDepthMask(false);
-        getValidColorGL11();
+        setupGlState(player);
 
         if (isDense()) {
             renderCableCore(3.0);
@@ -58,12 +40,7 @@ public class RendererCable extends AbstractRendererPreview implements IRenderPre
             renderCableConnections();
         }
 
-        GL11.glDepthMask(true);
-        GL11.glEnable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glPopMatrix();
+        clearGlState();
     }
 
     @Override
