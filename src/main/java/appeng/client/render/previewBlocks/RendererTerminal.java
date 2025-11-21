@@ -63,8 +63,8 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderTerminalBase();
-        renderTerminalDisplayFrame();
+        renderBase(2.0, 2.0, 14.0, 14.0, 14.0, 16.0);
+        renderBase(4.0, 4.0, 13.0, 12.0, 12.0, 14.0);
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -90,27 +90,5 @@ public class RendererTerminal extends AbstractRendererPreview implements IRender
                 PartFluidPatternTerminal.class,
                 PartFluidPatternTerminalEx.class,
                 PartLevelTerminal.class);
-    }
-
-    private void renderTerminalBase() {
-        double minX = 2.0 / 16.0;
-        double minY = 2.0 / 16.0;
-        double minZ = 14.0 / 16.0;
-        double maxX = 14.0 / 16.0;
-        double maxY = 14.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderTerminalDisplayFrame() {
-        double minX = 4.0 / 16.0;
-        double minY = 4.0 / 16.0;
-        double minZ = 13.0 / 16.0;
-        double maxX = 12.0 / 16.0;
-        double maxY = 12.0 / 16.0;
-        double maxZ = 14.0 / 16.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

@@ -182,4 +182,15 @@ public abstract class AbstractRendererPreview {
 
         return hasParts(partHost);
     }
+
+    protected void renderBase(double minXBase, double minYBase, double minZBase, double maxXBase, double maxYBase, double maxZBase) {
+        double minX = minXBase / 16.0;
+        double minY = minYBase / 16.0;
+        double minZ = minZBase / 16.0;
+        double maxX = maxXBase / 16.0;
+        double maxY = maxYBase / 16.0;
+        double maxZ = maxZBase / 16.0;
+
+        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
+    }
 }

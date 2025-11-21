@@ -50,7 +50,7 @@ public class RendererCableAnchor extends AbstractRendererPreview implements IRen
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderCableAnchorBase();
+        renderBase(7.0, 7.0, 10.0, 9.0, 9.0, 16.0);
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -58,17 +58,6 @@ public class RendererCableAnchor extends AbstractRendererPreview implements IRen
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glPopMatrix();
-    }
-
-    private void renderCableAnchorBase() {
-        double minX = 7.0 / 16.0;
-        double minY = 7.0 / 16.0;
-        double minZ = 10.0 / 16.0;
-        double maxX = 9.0 / 16.0;
-        double maxY = 9.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     @Override

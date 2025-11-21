@@ -52,7 +52,7 @@ public class RendererLevelEmitter extends AbstractRendererPreview implements IRe
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderLevelEmitterBase();
+        renderBase(7.0, 7.0, 11.0, 9.0, 9.0, 16.0);
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -65,16 +65,5 @@ public class RendererLevelEmitter extends AbstractRendererPreview implements IRe
     @Override
     public List<Class<?>> validItemClass() {
         return ViewHelper.getValidClasses(PartLevelEmitter.class, PartFluidLevelEmitter.class);
-    }
-
-    private void renderLevelEmitterBase() {
-        double minX = 7.0 / 16.0;
-        double minY = 7.0 / 16.0;
-        double minZ = 11.0 / 16.0;
-        double maxX = 9.0 / 16.0;
-        double maxY = 9.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

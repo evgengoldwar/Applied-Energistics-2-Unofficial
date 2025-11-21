@@ -50,8 +50,8 @@ public class RendererToggleBus extends AbstractRendererPreview implements IRende
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderToggleBusBase();
-        renderToggleBusConnector();
+        renderBase(6.0, 6.0, 11.0, 10.0, 10.0, 16.0);
+        renderBase(6.0, 6.0, 14.0, 10.0, 10.0, 16.0);
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -64,27 +64,5 @@ public class RendererToggleBus extends AbstractRendererPreview implements IRende
     @Override
     public List<Class<?>> validItemClass() {
         return ViewHelper.getValidClasses(PartToggleBus.class);
-    }
-
-    private void renderToggleBusBase() {
-        double minX = 6.0 / 16.0;
-        double minY = 6.0 / 16.0;
-        double minZ = 11.0 / 16.0;
-        double maxX = 10.0 / 16.0;
-        double maxY = 10.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderToggleBusConnector() {
-        double minX = 6.0 / 16.0;
-        double minY = 6.0 / 16.0;
-        double minZ = 14.0 / 16.0;
-        double maxX = 10.0 / 16.0;
-        double maxY = 10.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

@@ -51,7 +51,7 @@ public class RendererQuartzFiber extends AbstractRendererPreview implements IRen
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderQuartzFiberSolid();
+        renderBase(6.0, 6.0, 10.0, 10.0, 10.0, 16.0);
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -64,59 +64,5 @@ public class RendererQuartzFiber extends AbstractRendererPreview implements IRen
     @Override
     public List<Class<?>> validItemClass() {
         return ViewHelper.getValidClasses(PartQuartzFiber.class);
-    }
-
-    private void renderQuartzFiberSolid() {
-        double minX = 6.0 / 16.0;
-        double minY = 6.0 / 16.0;
-        double minZ = 10.0 / 16.0;
-        double maxX = 10.0 / 16.0;
-        double maxY = 10.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderSolidCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderSolidCube(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        Tessellator tessellator = Tessellator.instance;
-
-        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
-        GL11.glLineWidth(2.0f);
-
-        tessellator.startDrawing(GL11.GL_QUADS);
-
-        tessellator.addVertex(minX, minY, minZ);
-        tessellator.addVertex(maxX, minY, minZ);
-        tessellator.addVertex(maxX, minY, maxZ);
-        tessellator.addVertex(minX, minY, maxZ);
-
-        tessellator.addVertex(minX, maxY, minZ);
-        tessellator.addVertex(minX, maxY, maxZ);
-        tessellator.addVertex(maxX, maxY, maxZ);
-        tessellator.addVertex(maxX, maxY, minZ);
-
-        tessellator.addVertex(minX, minY, minZ);
-        tessellator.addVertex(minX, maxY, minZ);
-        tessellator.addVertex(maxX, maxY, minZ);
-        tessellator.addVertex(maxX, minY, minZ);
-
-        tessellator.addVertex(minX, minY, maxZ);
-        tessellator.addVertex(maxX, minY, maxZ);
-        tessellator.addVertex(maxX, maxY, maxZ);
-        tessellator.addVertex(minX, maxY, maxZ);
-
-        tessellator.addVertex(minX, minY, minZ);
-        tessellator.addVertex(minX, minY, maxZ);
-        tessellator.addVertex(minX, maxY, maxZ);
-        tessellator.addVertex(minX, maxY, minZ);
-
-        tessellator.addVertex(maxX, minY, minZ);
-        tessellator.addVertex(maxX, maxY, minZ);
-        tessellator.addVertex(maxX, maxY, maxZ);
-        tessellator.addVertex(maxX, minY, maxZ);
-
-        tessellator.draw();
-
-        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
     }
 }

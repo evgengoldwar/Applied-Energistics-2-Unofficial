@@ -52,10 +52,10 @@ public class RendererExportBus extends AbstractRendererPreview implements IRende
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderExportBusBase();
-        renderExportBusMiddle();
-        renderExportBusConnector();
-        renderExportBusFront();
+        renderBase(4.0, 4.0, 12.0, 12.0, 12.0, 14.0);
+        renderBase(5.0, 5.0, 14.0, 11.0, 11.0, 15.0);
+        renderBase(6.0, 6.0, 15.0, 10.0, 10.0, 16.0);
+        renderBase(6.0, 6.0, 11.0, 10.0, 10.0, 12.0);
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -68,49 +68,5 @@ public class RendererExportBus extends AbstractRendererPreview implements IRende
     @Override
     public List<Class<?>> validItemClass() {
         return ViewHelper.getValidClasses(PartExportBus.class, PartFluidExportBus.class);
-    }
-
-    private void renderExportBusBase() {
-        double minX = 4.0 / 16.0;
-        double minY = 4.0 / 16.0;
-        double minZ = 12.0 / 16.0;
-        double maxX = 12.0 / 16.0;
-        double maxY = 12.0 / 16.0;
-        double maxZ = 14.0 / 16.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderExportBusMiddle() {
-        double minX = 5.0 / 16.0;
-        double minY = 5.0 / 16.0;
-        double minZ = 14.0 / 16.0;
-        double maxX = 11.0 / 16.0;
-        double maxY = 11.0 / 16.0;
-        double maxZ = 15.0 / 16.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderExportBusConnector() {
-        double minX = 6.0 / 16.0;
-        double minY = 6.0 / 16.0;
-        double minZ = 15.0 / 16.0;
-        double maxX = 10.0 / 16.0;
-        double maxY = 10.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderExportBusFront() {
-        double minX = 6.0 / 16.0;
-        double minY = 6.0 / 16.0;
-        double minZ = 11.0 / 16.0;
-        double maxX = 10.0 / 16.0;
-        double maxY = 10.0 / 16.0;
-        double maxZ = 12.0 / 16.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

@@ -52,8 +52,8 @@ public class RendererAnnihilationPlane extends AbstractRendererPreview implement
             applySideRotation(previewX, previewY, previewZ, placementSide);
         }
 
-        renderAnnihilationPlaneBase();
-        renderAnnihilationPlaneConnector();
+        renderBase(1.0, 1.0, 15.0, 15.0, 15.0, 16.0);
+        renderBase(5.0, 5.0, 14.0, 11.0, 11.0, 15.0);
 
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -66,27 +66,5 @@ public class RendererAnnihilationPlane extends AbstractRendererPreview implement
     @Override
     public List<Class<?>> validItemClass() {
         return ViewHelper.getValidClasses(PartAnnihilationPlane.class, PartFormationPlane.class);
-    }
-
-    private void renderAnnihilationPlaneBase() {
-        double minX = 1.0 / 16.0;
-        double minY = 1.0 / 16.0;
-        double minZ = 15.0 / 16.0;
-        double maxX = 15.0 / 16.0;
-        double maxY = 15.0 / 16.0;
-        double maxZ = 1.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private void renderAnnihilationPlaneConnector() {
-        double minX = 5.0 / 16.0;
-        double minY = 5.0 / 16.0;
-        double minZ = 14.0 / 16.0;
-        double maxX = 11.0 / 16.0;
-        double maxY = 11.0 / 16.0;
-        double maxZ = 15.0 / 16.0;
-
-        renderWireframeCube(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }
