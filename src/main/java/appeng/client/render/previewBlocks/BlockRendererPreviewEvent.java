@@ -1,5 +1,6 @@
 package appeng.client.render.previewBlocks;
 
+import appeng.core.AEConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -24,32 +25,35 @@ public class BlockRendererPreviewEvent {
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        if (AEConfig.instance.previewBlocks) {
+            EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+            if (player == null) return;
 
-        EntityPlayer player = Minecraft.getMinecraft().thePlayer;
-        if (player == null) return;
+            ItemStack heldItem = player.getHeldItem();
+            if (heldItem == null) {
+                currentItem = null;
+                ViewHelper.clearCache();
+                return;
+            }
 
-        ItemStack heldItem = player.getHeldItem();
-        if (heldItem == null) {
-            currentItem = null;
-            ViewHelper.clearCache();
-            return;
+            if (currentItem == null || !areItemStacksEqual(currentItem, heldItem)) {
+                currentItem = heldItem;
+                ViewHelper.clearCache();
+            }
+
+            ViewHelper.setPlayer(player);
+            ViewHelper.setCachedItemStack(currentItem);
+            ViewHelper.updatePreview(player);
         }
-
-        if (currentItem == null || !areItemStacksEqual(currentItem, heldItem)) {
-            currentItem = heldItem;
-            ViewHelper.clearCache();
-        }
-
-        ViewHelper.setPlayer(player);
-        ViewHelper.setCachedItemStack(currentItem);
-        ViewHelper.updatePreview(player);
     }
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
-        if (currentItem == null) return;
-        ViewHelper.setCurrentPartialTicks(event.partialTicks);
-        ViewHelper.handleItem(currentItem);
+        if (AEConfig.instance.previewBlocks) {
+            if (currentItem == null) return;
+            ViewHelper.setCurrentPartialTicks(event.partialTicks);
+            ViewHelper.handleItem(currentItem);
+        }
     }
 
     private static boolean areItemStacksEqual(ItemStack stack1, ItemStack stack2) {
