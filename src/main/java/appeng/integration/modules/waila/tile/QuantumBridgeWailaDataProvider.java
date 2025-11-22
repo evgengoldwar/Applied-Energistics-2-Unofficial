@@ -32,20 +32,21 @@ public final class QuantumBridgeWailaDataProvider extends BaseWailaDataProvider 
             int y = accessor.getPosition().blockY;
             int z = accessor.getPosition().blockZ;
             boolean hasConnection = accessor.getNBTData().getBoolean("hasConnection");
+            NBTTagCompound nbt = accessor.getNBTData();
 
             if (hasConnection) {
 
-                int sideAX = accessor.getNBTData().getInteger("sideAX");
-                int sideAY = accessor.getNBTData().getInteger("sideAY");
-                int sideAZ = accessor.getNBTData().getInteger("sideAZ");
-                int sideADim = accessor.getNBTData().getInteger("sideADim");
-                String sideAName = accessor.getNBTData().getString("sideAName");
+                int sideAX = nbt.getInteger("sideAX");
+                int sideAY = nbt.getInteger("sideAY");
+                int sideAZ = nbt.getInteger("sideAZ");
+                int sideADim = nbt.getInteger("sideADim");
+                String sideAName = nbt.getString("sideAName");
 
-                int sideBX = accessor.getNBTData().getInteger("sideBX");
-                int sideBY = accessor.getNBTData().getInteger("sideBY");
-                int sideBZ = accessor.getNBTData().getInteger("sideBZ");
-                int sideBDim = accessor.getNBTData().getInteger("sideBDim");
-                String sideBName = accessor.getNBTData().getString("sideBName");
+                int sideBX = nbt.getInteger("sideBX");
+                int sideBY = nbt.getInteger("sideBY");
+                int sideBZ = nbt.getInteger("sideBZ");
+                int sideBDim = nbt.getInteger("sideBDim");
+                String sideBName = nbt.getString("sideBName");
 
                 if (x == sideAX && y == sideAY && z == sideAZ) {
                     getInfo(sideBX, sideBY, sideBZ, sideBDim, sideAName, currentToolTip);
