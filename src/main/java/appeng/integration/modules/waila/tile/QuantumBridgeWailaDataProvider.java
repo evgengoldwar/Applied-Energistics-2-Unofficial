@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
 
@@ -28,11 +29,12 @@ public final class QuantumBridgeWailaDataProvider extends BaseWailaDataProvider 
 
         final TileEntity te = accessor.getTileEntity();
         if (te instanceof TileQuantumBridge) {
-            int x = accessor.getPosition().blockX;
-            int y = accessor.getPosition().blockY;
-            int z = accessor.getPosition().blockZ;
-            boolean hasConnection = accessor.getNBTData().getBoolean("hasConnection");
+            MovingObjectPosition pos = accessor.getPosition();
+            int x = pos.blockX;
+            int y = pos.blockY;
+            int z = pos.blockZ;
             NBTTagCompound nbt = accessor.getNBTData();
+            boolean hasConnection = nbt.getBoolean("hasConnection");
 
             if (hasConnection) {
 
