@@ -30,10 +30,11 @@ public final class QuantumBridgeWailaDataProvider extends BaseWailaDataProvider 
         final TileEntity te = accessor.getTileEntity();
         if (te instanceof TileQuantumBridge) {
             MovingObjectPosition pos = accessor.getPosition();
+            NBTTagCompound nbt = accessor.getNBTData();
+
             int x = pos.blockX;
             int y = pos.blockY;
             int z = pos.blockZ;
-            NBTTagCompound nbt = accessor.getNBTData();
             boolean hasConnection = nbt.getBoolean("hasConnection");
 
             if (hasConnection) {
